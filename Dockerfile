@@ -4,6 +4,9 @@ WORKDIR /app
 
 COPY requirements.txt .
 
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
+
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
