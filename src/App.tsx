@@ -14,13 +14,15 @@ function App() {
     monthlyIncome: 60,
     monthlyLivingCost: 30,
     housingPlans: [
-      { cost: 8, duration: 9 }
+      { cost: 8, duration: 10 }
     ],
-    childBirthYearsFromNow: 2,
+    children: [
+      { birthYearOffset: 2, educationPattern: '全公立' }
+    ],
     childcareReduction: 5,
-    educationPattern: '全公立',
     retirementAge: 55,
-    retirementBonus: 1500
+    retirementBonus: 1500,
+    postRetirementJobs: []
   });
 
   const simulationData = useMemo(() => {

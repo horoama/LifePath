@@ -13,13 +13,13 @@ ENV https_proxy=$HTTPS_PROXY
 WORKDIR /app
 
 # Copy package.json and package-lock.json (if available)
-COPY client/package*.json ./
+COPY package*.json ./
 
 # Install dependencies
 RUN npm install
 
-# Copy the rest of the client application code
-COPY client/ .
+# Copy the rest of the application code
+COPY . .
 
 # Build the application
 RUN npm run build

@@ -3,6 +3,17 @@ export type HousingPlan = {
   duration: number | 'infinite';
 };
 
+export type Child = {
+  birthYearOffset: number;
+  educationPattern: '全公立' | '全私立' | '大学のみ私立';
+};
+
+export type PostRetirementJob = {
+  startAge: number;
+  endAge: number;
+  monthlyIncome: number;
+};
+
 export type SimulationInput = {
   currentAge: number;
   currentAssets: number;
@@ -10,11 +21,11 @@ export type SimulationInput = {
   monthlyIncome: number;
   monthlyLivingCost: number;
   housingPlans: HousingPlan[];
-  childBirthYearsFromNow: number;
-  childcareReduction: number;
-  educationPattern: '全公立' | '全私立' | '大学のみ私立';
+  children: Child[];
+  childcareReduction: number; // reduction per child
   retirementAge: number;
   retirementBonus: number;
+  postRetirementJobs: PostRetirementJob[];
 };
 
 export type SimulationYearResult = {
@@ -61,15 +72,14 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
     monthlyIncome,
     monthlyLivingCost,
     housingPlans,
-    childBirthYearsFromNow,
+    children,
     childcareReduction,
-    educationPattern,
     retirementAge,
-    retirementBonus
+    retirementBonus,
+    postRetirementJobs
   } = input;
 
   const interestRate = interestRatePct / 100.0;
-  const selectedCosts = EDU_COSTS_MAP[educationPattern] || EDU_COSTS_MAP["全公立"];
 
   const simulationData: SimulationYearResult[] = [];
 
@@ -84,24 +94,40 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
   while (age <= 100) {
     const yearsPassed = yearIndex;
 
-    // Determine Child Age and Education Cost
-    let childAge = -1;
-    if (yearsPassed >= childBirthYearsFromNow) {
-      childAge = yearsPassed - childBirthYearsFromNow;
+    // --- 1. Calculate Education Cost and Childcare Reduction ---
+    let totalEducationCost = 0;
+    let totalChildcareReduction = 0;
+    let birthEvent = false;
+
+    for (const child of children) {
+      let childAge = -1;
+      if (yearsPassed >= child.birthYearOffset) {
+        childAge = yearsPassed - child.birthYearOffset;
+      }
+
+      if (childAge === 0) {
+        birthEvent = true;
+      }
+
+      // Education Cost
+      const costs = EDU_COSTS_MAP[child.educationPattern] || EDU_COSTS_MAP["全公立"];
+      if (childAge >= 7 && childAge <= 12) {
+        totalEducationCost += costs.primary;
+      } else if (childAge >= 13 && childAge <= 15) {
+        totalEducationCost += costs.middle;
+      } else if (childAge >= 16 && childAge <= 18) {
+        totalEducationCost += costs.high;
+      } else if (childAge >= 19 && childAge <= 22) {
+        totalEducationCost += costs.uni;
+      }
+
+      // Childcare Reduction (from birth until 22)
+      if (childAge >= 0 && childAge <= 22) {
+        totalChildcareReduction += (childcareReduction * 12);
+      }
     }
 
-    let educationCost = 0;
-    if (childAge >= 7 && childAge <= 12) {
-      educationCost = selectedCosts.primary;
-    } else if (childAge >= 13 && childAge <= 15) {
-      educationCost = selectedCosts.middle;
-    } else if (childAge >= 16 && childAge <= 18) {
-      educationCost = selectedCosts.high;
-    } else if (childAge >= 19 && childAge <= 22) {
-      educationCost = selectedCosts.uni;
-    }
-
-    // Determine Current Housing Cost
+    // --- 2. Calculate Housing Cost ---
     let currentHousingCost = 0;
     let cumulativeYears = 0;
     let planFound = false;
@@ -131,16 +157,32 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
       currentHousingCost = housingPlans[housingPlans.length - 1].cost;
     }
 
-    // Determine Savings
-    const baseMonthlySavings = monthlyIncome - monthlyLivingCost - currentHousingCost;
-    let annualSavings = baseMonthlySavings * 12;
-
-    // Childcare Reduction (from birth until 22)
-    if (childAge >= 0 && childAge <= 22) {
-      annualSavings -= (childcareReduction * 12);
+    // --- 3. Calculate Income (Active vs Retired/Jobs) ---
+    let annualIncome = 0;
+    if (age < retirementAge) {
+      // Active Income
+      annualIncome = monthlyIncome * 12;
+    } else {
+      // Post-Retirement Jobs
+      let jobIncomeMonthly = 0;
+      for (const job of postRetirementJobs) {
+        if (age >= job.startAge && age <= job.endAge) {
+          jobIncomeMonthly += job.monthlyIncome;
+        }
+      }
+      annualIncome = jobIncomeMonthly * 12;
     }
 
-    // Add Retirement Bonus if applicable
+    // --- 4. Calculate Savings ---
+    // Savings = Income - Living Cost - Housing Cost - Childcare Reduction
+    const annualLivingCost = monthlyLivingCost * 12;
+    const annualHousingCost = currentHousingCost * 12;
+
+    // Note: Childcare reduction reduces the amount we can save (it's a cost increase/saving decrease essentially)
+    // The previous logic was: savings -= reduction. Yes, "reduction" means "reduction in ability to save".
+    let annualSavings = annualIncome - annualLivingCost - annualHousingCost - totalChildcareReduction;
+
+    // --- 5. Handle Retirement Bonus and Events ---
     let bonusThisYear = 0;
     let eventNote = "";
 
@@ -149,14 +191,13 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
       eventNote += `退職金(+${retirementBonus}) `;
     }
 
-    if (childAge === 0) {
+    if (birthEvent) {
       eventNote += "出産 ";
     }
 
-    // Apply Logic
-    // Update Principal: Previous Principal + Savings - Expenses + Bonus
-    // Note: Principal tracks the net amount contributed from work/bonus.
-    const netContribution = annualSavings - educationCost + bonusThisYear;
+    // --- 6. Update Assets ---
+    // Net Contribution = Savings - Education Cost + Bonus
+    const netContribution = annualSavings - totalEducationCost + bonusThisYear;
     totalPrincipal += netContribution;
 
     // Balance before interest for this year's gain calculation
@@ -175,7 +216,7 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
       event: eventNote.trim(),
       monthlyHousingCost: currentHousingCost,
       annualSavings,
-      educationCost,
+      educationCost: totalEducationCost,
       yearEndBalance: Math.floor(assets),
       investmentIncome: Math.floor(investmentIncome),
       totalPrincipal: Math.floor(totalPrincipal),
