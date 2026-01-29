@@ -1,49 +1,67 @@
 from simulation import calculate_simulation
 
 def test_simulation():
+    # Housing Plan Test
+    # 0-8 years (9 years): Cost 8.
+    # 9-18 years (10 years): Cost 15.
+    # 19+ years: Cost 10 (Permanent).
+
+    housing_plans = [
+        {'cost': 8, 'duration': 9},
+        {'cost': 15, 'duration': 10},
+        {'cost': 10, 'duration': 'infinite'}
+    ]
+
     df = calculate_simulation(
         current_age=32,
         current_assets=700,
         interest_rate=0.05,
-        monthly_savings=20, # 240/yr
+        monthly_income=60,
+        monthly_living_cost=30,
+        housing_plans=housing_plans,
         child_birth_years_from_now=2,
-        childcare_reduction=5, # 60/yr
-        education_pattern="大学のみ私立", # 7-18: 40, 19-22: 150
-        housing_remaining_years=9,
-        rent_increase=7, # 84/yr
+        childcare_reduction=5,
+        education_pattern="全公立",
         retirement_age=55,
         retirement_bonus=1500
     )
 
     # 1. Start (Year 0, Age 32)
-    # Savings: 240. Edu: 0.
-    # Balance: (700 + 240) * 1.05 = 987.
+    # Housing: 8.
+    # Base Savings: 60 - 30 - 8 = 22.
+    # Child: Not born.
+    # Annual: 22 * 12 = 264.
     row_0 = df.iloc[0]
-    print(f"Age {row_0['年齢']}: Savings={row_0['年間積立額']}, Edu={row_0['教育費']}, Balance={row_0['年末残高']}")
+    print(f"Age {row_0['年齢']}: Housing={row_0['住居費(月)']}, Savings={row_0['年間積立額']}")
 
-    # 2. Child Born (Year 2, Age 34)
-    # Savings: 240 - 60 = 180.
-    row_2 = df.iloc[2]
-    print(f"Age {row_2['年齢']} (Event:{row_2['イベント']}): Savings={row_2['年間積立額']}, Edu={row_2['教育費']}")
+    # 2. Year 8 (Age 40) -> Last year of Plan 1
+    # Housing: 8.
+    row_8 = df.iloc[8]
+    print(f"Age {row_8['年齢']}: Housing={row_8['住居費(月)']}")
 
-    # 3. Housing ends (Year 9, Age 41)
-    # Child is 7 (Edu starts: 40).
-    # Savings: 240 - 60 (Child) - 84 (Rent) = 96.
+    # 3. Year 9 (Age 41) -> First year of Plan 2
+    # Housing: 15.
+    # Base Savings: 60 - 30 - 15 = 15.
+    # Child (born Year 2) is 7 -> Edu 40. Childcare deduction 5*12=60.
+    # Annual: 15*12 - 60 = 180 - 60 = 120.
     row_9 = df.iloc[9]
-    print(f"Age {row_9['年齢']}: Savings={row_9['年間積立額']}, Edu={row_9['教育費']}")
+    print(f"Age {row_9['年齢']}: Housing={row_9['住居費(月)']}, Savings={row_9['年間積立額']}")
 
-    # 4. Retirement (Age 55)
-    # Child is 55 - 32 - 2 = 21 (Uni: 150).
-    # Savings: 240 - 60 - 84 = 96.
-    # Bonus: 1500.
-    row_retirement = df[df['年齢'] == 55].iloc[0]
-    print(f"Age {row_retirement['年齢']} (Event:{row_retirement['イベント']}): Savings={row_retirement['年間積立額']}, Edu={row_retirement['教育費']}, Balance={row_retirement['年末残高']}")
+    # 4. Year 18 (Age 50) -> Last year of Plan 2
+    # Housing: 15.
+    row_18 = df.iloc[18]
+    print(f"Age {row_18['年齢']}: Housing={row_18['住居費(月)']}")
 
-    # 5. Child > 22 (Age 57 -> Child 23)
-    # Childcare reduction (60) stops.
-    # Savings: 240 - 84 = 156.
-    row_57 = df[df['年齢'] == 57].iloc[0]
-    print(f"Age {row_57['年齢']}: Savings={row_57['年間積立額']}")
+    # 5. Year 19 (Age 51) -> Plan 3 (Infinite) starts
+    # Housing: 10.
+    row_19 = df.iloc[19]
+    print(f"Age {row_19['年齢']}: Housing={row_19['住居費(月)']}")
+
+    # 6. Year 50 (Age 82) -> Still Plan 3
+    # Housing: 10.
+    row_50 = df.iloc[50]
+    print(f"Age {row_50['年齢']}: Housing={row_50['住居費(月)']}")
+
 
 if __name__ == "__main__":
     test_simulation()
