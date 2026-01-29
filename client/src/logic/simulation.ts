@@ -25,6 +25,9 @@ export type SimulationYearResult = {
   annualSavings: number;
   educationCost: number;
   yearEndBalance: number;
+  investmentIncome: number;
+  totalPrincipal: number;
+  totalInvestmentIncome: number;
 };
 
 export const EDUCATION_PATTERNS = ['全公立', '全私立', '大学のみ私立'] as const;
@@ -71,6 +74,9 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
   const simulationData: SimulationYearResult[] = [];
 
   let assets = currentAssets;
+  let totalPrincipal = currentAssets;
+  let totalInvestmentIncome = 0;
+
   let age = currentAge;
   let yearIndex = 0;
 
@@ -148,10 +154,20 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
     }
 
     // Apply Logic
-    const balancePreInterest = assets + annualSavings - educationCost + bonusThisYear;
+    // Update Principal: Previous Principal + Savings - Expenses + Bonus
+    // Note: Principal tracks the net amount contributed from work/bonus.
+    const netContribution = annualSavings - educationCost + bonusThisYear;
+    totalPrincipal += netContribution;
 
-    // Apply Interest
-    assets = balancePreInterest * (1 + interestRate);
+    // Balance before interest for this year's gain calculation
+    const balancePreInterest = assets + netContribution;
+
+    // Calculate Investment Income for this year
+    const investmentIncome = balancePreInterest * interestRate;
+    totalInvestmentIncome += investmentIncome;
+
+    // Update Total Assets
+    assets = balancePreInterest + investmentIncome;
 
     simulationData.push({
       age,
@@ -160,7 +176,10 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
       monthlyHousingCost: currentHousingCost,
       annualSavings,
       educationCost,
-      yearEndBalance: Math.floor(assets)
+      yearEndBalance: Math.floor(assets),
+      investmentIncome: Math.floor(investmentIncome),
+      totalPrincipal: Math.floor(totalPrincipal),
+      totalInvestmentIncome: Math.floor(totalInvestmentIncome)
     });
 
     age += 1;

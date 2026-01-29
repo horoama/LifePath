@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+  Line, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart
 } from 'recharts';
 import type { SimulationYearResult } from '../logic/simulation';
 
@@ -23,7 +23,11 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
       ? `${retirementRow.yearEndBalance.toLocaleString()} 万円`
       : "データなし";
 
-    return { targetAgeText, retirementAssetText };
+    const retirementIncomeText = retirementRow
+      ? `${retirementRow.investmentIncome.toLocaleString()} 万円`
+      : "データなし";
+
+    return { targetAgeText, retirementAssetText, retirementIncomeText };
   }, [data, targetAmount, retirementAge]);
 
   // Prepare chart data with target line
@@ -39,7 +43,7 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
       <h1 className="text-3xl font-bold text-gray-800 mb-8">家族構成と住居変動を考慮したサイドFIREシミュレーター</h1>
 
       {/* Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <MetricCard
           label={`目標${targetAmount}万円到達年齢`}
           value={metrics.targetAgeText}
@@ -48,23 +52,48 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
           label={`${retirementAge}歳時点の資産額`}
           value={metrics.retirementAssetText}
         />
+        <MetricCard
+          label={`${retirementAge}歳時点の年間不労所得`}
+          value={metrics.retirementIncomeText}
+        />
       </div>
 
-      {/* Chart */}
-      <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-        <h2 className="text-xl font-semibold text-gray-700 mb-4">資産残高推移</h2>
-        <div className="h-[400px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="age" label={{ value: '年齢', position: 'insideBottomRight', offset: -5 }} />
-              <YAxis label={{ value: '万円', angle: -90, position: 'insideLeft' }} />
-              <Tooltip formatter={(value: any) => typeof value === 'number' ? value.toLocaleString() : value} />
-              <Legend />
-              <Line type="monotone" dataKey="yearEndBalance" name="年末残高" stroke="#1f77b4" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="target" name="目標額" stroke="#ff7f0e" strokeDasharray="5 5" dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
+      {/* Charts Container */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
+        {/* Main Asset Chart (Stacked) */}
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h2 className="text-xl font-semibold text-gray-700 mb-4">資産内訳推移 (元本 + 運用益)</h2>
+          <div className="h-[400px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="age" label={{ value: '年齢', position: 'insideBottomRight', offset: -5 }} />
+                <YAxis label={{ value: '万円', angle: -90, position: 'insideLeft' }} />
+                <Tooltip formatter={(value: any) => typeof value === 'number' ? value.toLocaleString() : value} />
+                <Legend />
+                <Area type="monotone" dataKey="totalPrincipal" name="元本累計" stackId="1" stroke="#8884d8" fill="#8884d8" />
+                <Area type="monotone" dataKey="totalInvestmentIncome" name="運用益累計" stackId="1" stroke="#82ca9d" fill="#82ca9d" />
+                <Line type="monotone" dataKey="target" name="目標額" stroke="#ff7f0e" strokeDasharray="5 5" dot={false} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Annual Investment Income Chart */}
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h2 className="text-xl font-semibold text-gray-700 mb-4">年間不労所得 (運用益) 推移</h2>
+          <div className="h-[400px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="age" label={{ value: '年齢', position: 'insideBottomRight', offset: -5 }} />
+                <YAxis label={{ value: '万円', angle: -90, position: 'insideLeft' }} />
+                <Tooltip formatter={(value: any) => typeof value === 'number' ? value.toLocaleString() : value} />
+                <Legend />
+                <Bar dataKey="investmentIncome" name="年間運用益" fill="#4ade80" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
 
@@ -81,6 +110,9 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
                 <th className="px-4 py-3">住居費(月)</th>
                 <th className="px-4 py-3">年間積立額</th>
                 <th className="px-4 py-3">教育費</th>
+                <th className="px-4 py-3 text-green-600">運用益(年)</th>
+                <th className="px-4 py-3 text-gray-500">元本累計</th>
+                <th className="px-4 py-3 text-green-600">運用益累計</th>
                 <th className="px-4 py-3">年末残高</th>
               </tr>
             </thead>
@@ -93,6 +125,9 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
                   <td className="px-4 py-3">{row.monthlyHousingCost}</td>
                   <td className="px-4 py-3">{row.annualSavings}</td>
                   <td className="px-4 py-3">{row.educationCost}</td>
+                  <td className="px-4 py-3 text-green-600 font-medium">+{row.investmentIncome.toLocaleString()}</td>
+                  <td className="px-4 py-3 text-gray-500">{row.totalPrincipal.toLocaleString()}</td>
+                  <td className="px-4 py-3 text-green-600">+{row.totalInvestmentIncome.toLocaleString()}</td>
                   <td className="px-4 py-3 font-bold">{row.yearEndBalance.toLocaleString()}</td>
                 </tr>
               ))}

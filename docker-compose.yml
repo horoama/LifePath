@@ -6,4 +6,4 @@ services:
         - HTTP_PROXY
         - HTTPS_PROXY
     ports:
-      - "8501:8501"
+      - "8501:80"
