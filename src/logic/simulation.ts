@@ -59,18 +59,6 @@ export type SimulationYearResult = {
   investmentIncome: number;
   totalPrincipal: number;
   totalInvestmentIncome: number;
-  incomeBreakdown: {
-    salary: number;
-    bonus: number;
-    pension: number;
-    oneTime: number;
-  };
-  expenseBreakdown: {
-    living: number;
-    housing: number;
-    education: number;
-    oneTime: number;
-  };
 };
 
 export const EDUCATION_PATTERNS = ['全公立', '全私立', '大学のみ私立'] as const;
@@ -127,27 +115,27 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
     const eventNotes: string[] = [];
 
     // --- Income Calculation ---
-    let mainJobIncome = 0;
-    let mainJobBonus = 0;
-    let postRetirementIncome = 0; // Includes monthly + bonus
+    let annualIncome = 0;
+    let incomeFromJobs = 0;
+    let bonuses = 0;
     let oneTimeIncome = 0;
 
     // 1. Main Job
     if (age < retirementAge) {
-      mainJobIncome += monthlyIncome * 12;
+      incomeFromJobs += monthlyIncome * 12;
     }
     if (age === retirementAge) {
-      mainJobBonus += retirementBonus;
+      bonuses += retirementBonus;
       eventNotes.push(`退職金(+${retirementBonus})`);
     }
 
     // 2. Post-Retirement Jobs
     postRetirementJobs.forEach(job => {
       if (age >= job.startAge && age < job.endAge) {
-        postRetirementIncome += job.monthlyIncome * 12;
+        incomeFromJobs += job.monthlyIncome * 12;
       }
       if (age === job.endAge) {
-        postRetirementIncome += job.retirementBonus;
+        bonuses += job.retirementBonus;
         eventNotes.push(`再雇用退職金(+${job.retirementBonus})`);
       }
     });
@@ -160,16 +148,13 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
       }
     });
 
-    const annualIncome = mainJobIncome + mainJobBonus + postRetirementIncome + oneTimeIncome;
+    annualIncome = incomeFromJobs + bonuses + oneTimeIncome;
 
     // --- Expense Calculation ---
-    let basicLivingExpense = 0;
-    let housingExpense = 0;
-    let childExpense = 0;
-    let oneTimeExpense = 0;
+    let annualExpenses = 0;
 
     // 1. Basic Living Cost
-    basicLivingExpense += monthlyLivingCost * 12;
+    annualExpenses += monthlyLivingCost * 12;
 
     // 2. Housing Cost
     let currentHousingCost = 0;
@@ -191,18 +176,13 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
       }
       cumulativeYears += dur;
     }
-    // Fallback if no plan matches (should ideally rely on infinite last plan)
     if (!planFound && housingPlans.length > 0) {
-        // If we ran out of plans, assume the last plan's cost continues if it was intended to be permanent,
-        // but technically the logic above handles 'infinite'.
-        // If we get here, it means all finite plans expired and no infinite plan exists.
-        // We'll just take the last plan's cost as a fallback or 0?
-        // Original logic took last plan cost.
-        currentHousingCost = housingPlans[housingPlans.length - 1].cost;
+      currentHousingCost = housingPlans[housingPlans.length - 1].cost;
     }
-    housingExpense += currentHousingCost * 12;
+    annualExpenses += currentHousingCost * 12;
 
     // 3. Children Expenses (Education + Childcare)
+    let totalChildExpenses = 0;
     children.forEach((child, index) => {
       const childAge = yearsPassed - child.birthYearOffset;
       const costs = EDU_COSTS_MAP[child.educationPattern] || EDU_COSTS_MAP["全公立"];
@@ -213,7 +193,7 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
 
       // Childcare (0-22)
       if (childAge >= 0 && childAge <= 22) {
-        childExpense += child.monthlyChildcareCost * 12;
+        totalChildExpenses += child.monthlyChildcareCost * 12;
       }
 
       // Education
@@ -223,18 +203,17 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
       else if (childAge >= 16 && childAge <= 18) eduCost = costs.high;
       else if (childAge >= 19 && childAge <= 22) eduCost = costs.uni;
 
-      childExpense += eduCost;
+      totalChildExpenses += eduCost;
     });
+    annualExpenses += totalChildExpenses;
 
     // 4. One-time Expenses
     oneTimeEvents.forEach(evt => {
       if (evt.type === 'expense' && evt.age === age) {
-        oneTimeExpense += evt.amount;
+        annualExpenses += evt.amount;
         eventNotes.push(`${evt.name}(-${evt.amount})`);
       }
     });
-
-    const annualExpenses = basicLivingExpense + housingExpense + childExpense + oneTimeExpense;
 
     // --- Balance Update ---
     const netSavings = annualIncome - annualExpenses;
@@ -256,19 +235,7 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
       yearEndBalance: Math.floor(assets),
       investmentIncome: Math.floor(investmentIncome),
       totalPrincipal: Math.floor(totalPrincipal),
-      totalInvestmentIncome: Math.floor(totalInvestmentIncome),
-      incomeBreakdown: {
-        salary: mainJobIncome,
-        bonus: mainJobBonus,
-        pension: postRetirementIncome,
-        oneTime: oneTimeIncome
-      },
-      expenseBreakdown: {
-        living: basicLivingExpense,
-        housing: housingExpense,
-        education: childExpense,
-        oneTime: oneTimeExpense
-      }
+      totalInvestmentIncome: Math.floor(totalInvestmentIncome)
     });
 
     age += 1;

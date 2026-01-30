@@ -20,7 +20,7 @@ function App() {
     monthlyLivingCost: 25,
     housingPlans: [
       { cost: 10, duration: 10 },
-      { cost: 12, duration: 'infinite' }
+      { cost: 12, duration: 25 }
     ],
     children: [
       { birthYearOffset: 2, educationPattern: '全公立', monthlyChildcareCost: 5 }
