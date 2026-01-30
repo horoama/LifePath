@@ -1,4 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useRef, useCallback } from 'react';
+import { toPng } from 'html-to-image';
+import { Camera } from 'lucide-react';
 import {
   Area, AreaChart, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
@@ -12,6 +14,7 @@ type ResultsProps = {
 };
 
 export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
+  const ref = useRef<HTMLDivElement>(null);
 
   const metrics = useMemo(() => {
     // Target Reached Age
@@ -40,6 +43,30 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
     }));
   }, [data, targetAmount]);
 
+  const handleSaveImage = useCallback(() => {
+    if (ref.current === null) {
+      return;
+    }
+
+    toPng(ref.current, {
+        cacheBust: true,
+        filter: (node) => {
+            if (node instanceof HTMLElement && node.classList.contains('no-capture')) {
+                return false;
+            }
+            return true;
+        }
+    })
+      .then((dataUrl) => {
+        const link = document.createElement('a');
+        link.download = 'simulation-results.png';
+        link.href = dataUrl;
+        link.click();
+      })
+      .catch((err) => {
+        console.error('Failed to capture image', err);
+      });
+  }, [ref]);
   const handleDownloadCSV = () => {
     // Define headers
     const headers = [
@@ -97,8 +124,17 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
   };
 
   return (
-    <div className="flex-1 p-8 overflow-y-auto bg-gray-100">
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">ライフプラン・シミュレーション結果</h1>
+    <div className="flex-1 p-8 overflow-y-auto bg-gray-100" ref={ref}>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-800">ライフプラン・シミュレーション結果</h1>
+        <button
+            onClick={handleSaveImage}
+            className="no-capture flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow transition-colors cursor-pointer"
+        >
+            <Camera size={20} />
+            <span>画像で保存</span>
+        </button>
+      </div>
 
       {/* Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
