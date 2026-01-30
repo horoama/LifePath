@@ -4,6 +4,7 @@ import { Camera } from 'lucide-react';
 import {
   Area, AreaChart, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
+import { Download } from 'lucide-react';
 import type { SimulationYearResult } from '../logic/simulation';
 
 type ResultsProps = {
@@ -66,6 +67,61 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
         console.error('Failed to capture image', err);
       });
   }, [ref]);
+  const handleDownloadCSV = () => {
+    // Define headers
+    const headers = [
+      '年齢',
+      'イベント',
+      '年間収入',
+      '給与収入',
+      '退職金',
+      '再雇用・年金',
+      '一時収入',
+      '年間支出',
+      '基本生活費',
+      '住居費',
+      '教育・養育費',
+      '一時支出',
+      '年間収支(貯蓄)',
+      '運用益',
+      '年末資産残高'
+    ];
+
+    // Map data to rows
+    const rows = data.map(row => [
+      row.age,
+      `"${row.event || ''}"`, // Quote events to handle commas
+      row.annualIncome,
+      row.incomeBreakdown.salary,
+      row.incomeBreakdown.bonus,
+      row.incomeBreakdown.pension,
+      row.incomeBreakdown.oneTime,
+      row.annualExpenses,
+      row.expenseBreakdown.living,
+      row.expenseBreakdown.housing,
+      row.expenseBreakdown.education,
+      row.expenseBreakdown.oneTime,
+      row.annualSavings,
+      row.investmentIncome,
+      row.yearEndBalance
+    ]);
+
+    // Combine headers and rows
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+
+    // Create blob and download link (with BOM for Excel)
+    const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'life_plan_simulation.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <div className="flex-1 p-8 overflow-y-auto bg-gray-100" ref={ref}>
@@ -161,7 +217,15 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
 
       {/* Table */}
       <div className="bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-xl font-semibold text-gray-700 mb-4">年次収支データ</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold text-gray-700">年次収支データ</h2>
+          <button
+            onClick={handleDownloadCSV}
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-sm"
+          >
+            <Download size={16} /> CSVダウンロード
+          </button>
+        </div>
         <div className="overflow-x-auto max-h-[500px]">
           <table className="min-w-full text-sm text-left text-gray-500">
             <thead className="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0 z-10">
