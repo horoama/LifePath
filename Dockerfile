@@ -1,4 +1,11 @@
 FROM node:20-alpine AS builder
+
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
+
+ENV HTTP_PROXY=$HTTP_PROXY
+ENV HTTPS_PROXY=$HTTPS_PROXY
+
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci

@@ -72,7 +72,7 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="age" label={{ value: '年齢', position: 'insideBottomRight', offset: -5 }} unit="歳" />
                 <YAxis label={{ value: '万円', angle: -90, position: 'insideLeft' }} />
-                <Tooltip formatter={(value: number | string) => typeof value === 'number' ? `${value.toLocaleString()} 万円` : value} />
+                <Tooltip formatter={(value: any) => typeof value === 'number' ? `${value.toLocaleString()} 万円` : value} />
                 <Legend />
                 <Area type="monotone" dataKey="yearEndBalance" name="総資産" stroke="#8884d8" fill="#8884d8" />
                 <Area type="monotone" dataKey="target" name="目標額" stroke="#ff7f0e" fill="none" strokeDasharray="5 5" />
@@ -90,7 +90,7 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="age" label={{ value: '年齢', position: 'insideBottomRight', offset: -5 }} unit="歳" />
                 <YAxis label={{ value: '万円', angle: -90, position: 'insideLeft' }} />
-                <Tooltip formatter={(value: number | string) => typeof value === 'number' ? `${value.toLocaleString()} 万円` : value} />
+                <Tooltip formatter={(value: any) => typeof value === 'number' ? `${value.toLocaleString()} 万円` : value} />
                 <Legend />
                 <Bar dataKey="investmentIncome" name="年間運用益" fill="#4ade80" />
               </BarChart>
