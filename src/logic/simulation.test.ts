@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calculateSimulation, SimulationInput } from './simulation';
+import { calculateSimulation, type SimulationInput } from './simulation';
 
 describe('calculateSimulation', () => {
   const baseInput: SimulationInput = {
@@ -95,7 +95,7 @@ describe('calculateSimulation', () => {
           ...baseInput,
           housingPlans: [
               { cost: 10, duration: 5 }, // 5 years: age 30, 31, 32, 33, 34
-              { cost: 5, duration: 'infinite' } // From age 35
+              { cost: 5, duration: 'infinite' as const } // From age 35
           ]
       };
       const result = calculateSimulation(inputHousing);
