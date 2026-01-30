@@ -1,9 +1,5 @@
 services:
   app:
-    build:
-      context: .
-      args:
-        - HTTP_PROXY
-        - HTTPS_PROXY
+    build: .
     ports:
       - "8501:80"
