@@ -11,6 +11,7 @@ function App() {
     currentAge: 32,
     currentAssets: 700,
     interestRatePct: 5.0,
+    deathAge: 90,
     monthlyIncome: 45,
     retirementAge: 60,
     retirementBonus: 1500,
@@ -20,7 +21,7 @@ function App() {
     monthlyLivingCost: 25,
     housingPlans: [
       { cost: 10, duration: 10 },
-      { cost: 12, duration: 25 }
+      { cost: 12, duration: 'infinite' }
     ],
     children: [
       { birthYearOffset: 2, educationPattern: '全公立', monthlyChildcareCost: 5 }
