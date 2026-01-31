@@ -99,7 +99,10 @@ export function Sidebar({ input, setInput, targetAmount, setTargetAmount }: Side
 
   return (
     <div className="w-full lg:w-96 bg-white p-6 shadow-lg overflow-y-auto h-screen sticky top-0">
-      <h2 className="text-xl font-bold mb-6 text-gray-800">人生見えるくん</h2>
+      <h2 className="text-xl font-bold mb-6 text-gray-800 flex items-center gap-2">
+        <img src="/logo.svg" alt="Logo" className="w-8 h-8" />
+        人生見えるくん
+      </h2>
 
       <div className="space-y-8">
         {/* 1. Basic Info */}
