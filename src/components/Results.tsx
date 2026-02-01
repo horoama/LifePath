@@ -188,6 +188,7 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
                     <Bar dataKey="incomeBreakdown.bonus" name="退職金" stackId="a" fill="#0ea5e9" />
                     <Bar dataKey="incomeBreakdown.pension" name="再雇用・年金" stackId="a" fill="#8b5cf6" />
                     <Bar dataKey="incomeBreakdown.oneTime" name="一時収入" stackId="a" fill="#22c55e" />
+                    <Bar dataKey="investmentIncome" name="運用益" stackId="a" fill="#f59e0b" />
                 </BarChart>
                 </ResponsiveContainer>
             </div>
