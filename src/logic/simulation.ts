@@ -154,10 +154,8 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
       mainJobIncome += (monthlyIncome * 12) * incomeGrowthFactor;
     }
     if (age === retirementAge) {
-      // Retirement bonus is typically fixed or calculated differently, but here we treat it as fixed nominal?
-      // Or does it grow? Usually retirement bonus is based on final salary.
-      // Let's assume it grows with income increase rate as it's often salary-linked.
-      mainJobBonus += retirementBonus * incomeGrowthFactor;
+      // Retirement bonus is fixed nominal (not affected by income growth rate per user request)
+      mainJobBonus += retirementBonus;
       eventNotes.push(`退職金(+${Math.floor(mainJobBonus)})`);
     }
 

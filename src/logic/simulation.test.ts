@@ -86,4 +86,37 @@ describe('calculateSimulation with Inflation and Growth', () => {
     // Should be less than 360
     expect(result[5].annualIncome).toBeLessThan(360);
   });
+
+  it('should NOT apply income growth to retirement bonus', () => {
+    // Retirement Age = 35 (5 years from start)
+    const bonusInput = {
+        ...baseInput,
+        currentAge: 30,
+        retirementAge: 35,
+        retirementBonus: 1000,
+        incomeIncreaseRatePct: 5.0, // Significant growth
+        inflationRatePct: 0.0
+    };
+
+    const result = calculateSimulation(bonusInput);
+    const retirementYear = result.find(r => r.age === 35);
+
+    // Bonus should be exactly 1000 (Nominal)
+    // Income breakdown bonus should be 1000
+    expect(retirementYear).toBeDefined();
+    expect(retirementYear?.incomeBreakdown.bonus).toBe(1000);
+
+    // With inflation, real value should decrease
+    const inflatedBonusInput = {
+        ...bonusInput,
+        inflationRatePct: 2.0
+    };
+    const resultInf = calculateSimulation(inflatedBonusInput);
+    const retirementYearInf = resultInf.find(r => r.age === 35);
+
+    // Nominal = 1000
+    // Real = 1000 / 1.02^5
+    expect(retirementYearInf?.incomeBreakdown.bonus).toBeLessThan(1000);
+    expect(retirementYearInf?.incomeBreakdown.bonus).toBeCloseTo(1000 / Math.pow(1.02, 5), 0);
+  });
 });
