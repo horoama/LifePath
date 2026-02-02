@@ -163,7 +163,7 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="age" label={{ value: '年齢', position: 'insideBottomRight', offset: -5 }} unit="歳" />
                 <YAxis label={{ value: '万円', angle: -90, position: 'insideLeft' }} />
-                <Tooltip formatter={(value: any) => typeof value === 'number' ? `${value.toLocaleString()} 万円` : value} />
+                <Tooltip formatter={(value: number | string | Array<number | string> | undefined) => typeof value === 'number' ? `${value.toLocaleString()} 万円` : value} />
                 <Legend />
                 <Area type="monotone" dataKey="yearEndBalance" name="総資産" stroke="#8884d8" fill="#8884d8" />
                 <Area type="monotone" dataKey="target" name="目標額" stroke="#ff7f0e" fill="none" strokeDasharray="5 5" />
@@ -182,7 +182,7 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="age" label={{ value: '年齢', position: 'insideBottomRight', offset: -5 }} unit="歳" />
                     <YAxis label={{ value: '万円', angle: -90, position: 'insideLeft' }} />
-                    <Tooltip formatter={(value: any) => typeof value === 'number' ? `${value.toLocaleString()} 万円` : value} />
+                    <Tooltip formatter={(value: number | string | Array<number | string> | undefined) => typeof value === 'number' ? `${value.toLocaleString()} 万円` : value} />
                     <Legend />
                     <Bar dataKey="incomeBreakdown.salary" name="給与収入" stackId="a" fill="#3b82f6" />
                     <Bar dataKey="incomeBreakdown.bonus" name="退職金" stackId="a" fill="#0ea5e9" />
@@ -203,7 +203,7 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="age" label={{ value: '年齢', position: 'insideBottomRight', offset: -5 }} unit="歳" />
                     <YAxis label={{ value: '万円', angle: -90, position: 'insideLeft' }} />
-                    <Tooltip formatter={(value: any) => typeof value === 'number' ? `${value.toLocaleString()} 万円` : value} />
+                    <Tooltip formatter={(value: number | string | Array<number | string> | undefined) => typeof value === 'number' ? `${value.toLocaleString()} 万円` : value} />
                     <Legend />
                     <Bar dataKey="expenseBreakdown.living" name="基本生活費" stackId="a" fill="#f97316" />
                     <Bar dataKey="expenseBreakdown.housing" name="住居費" stackId="a" fill="#ef4444" />

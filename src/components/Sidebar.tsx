@@ -1,4 +1,4 @@
-import { useState, useEffect, useId } from 'react';
+import { useState, useId } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import type { SimulationInput, HousingPlan, PostRetirementJob, Child, OneTimeEvent } from '../logic/simulation';
 import { EDUCATION_PATTERNS } from '../logic/simulation';
@@ -354,11 +354,10 @@ function NumberInput({ label, value, onChange, step = 1, className = "", tooltip
   const [inputValue, setInputValue] = useState(value.toString());
   const [isFocused, setIsFocused] = useState(false);
 
-  useEffect(() => {
-    if (!isFocused) {
-      setInputValue(value.toString());
-    }
-  }, [value, isFocused]);
+  // Sync state with props when not focused
+  if (!isFocused && inputValue !== value.toString()) {
+    setInputValue(value.toString());
+  }
 
   const handleBlur = () => {
     setIsFocused(false);
