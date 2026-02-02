@@ -113,6 +113,7 @@ export function Sidebar({ input, setInput, targetAmount, setTargetAmount }: Side
             <NumberInput label="想定寿命 (歳)" value={input.deathAge || 100} onChange={handleDeathAgeChange} />
             <NumberInput label="現在の総資産 (万円)" value={input.currentAssets} step={10} onChange={v => handleChange('currentAssets', v)} />
             <NumberInput label="想定年利 (%)" value={input.interestRatePct} step={0.1} onChange={v => handleChange('interestRatePct', v)} />
+            <NumberInput label="想定インフレ率 (%)" value={input.inflationRatePct ?? 0} step={0.1} onChange={v => handleChange('inflationRatePct', v)} />
             <NumberInput label="目標資産額 (万円)" value={targetAmount} step={100} onChange={setTargetAmount} />
           </div>
         </section>
@@ -122,6 +123,7 @@ export function Sidebar({ input, setInput, targetAmount, setTargetAmount }: Side
           <h3 className="font-bold text-gray-700 mb-3 border-b pb-1">現在の収入 (メイン)</h3>
           <div className="space-y-3">
             <NumberInput label="手取り月収 (万円)" value={input.monthlyIncome} onChange={v => handleChange('monthlyIncome', v)} />
+            <NumberInput label="想定昇給率 (%)" value={input.incomeIncreaseRatePct ?? 0} step={0.1} onChange={v => handleChange('incomeIncreaseRatePct', v)} />
             <NumberInput label="退職年齢" value={input.retirementAge} onChange={v => handleChange('retirementAge', v)} />
             <NumberInput label="退職金 (万円)" value={input.retirementBonus} step={100} onChange={v => handleChange('retirementBonus', v)} />
           </div>

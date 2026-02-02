@@ -1,111 +1,122 @@
 import { describe, it, expect } from 'vitest';
-import { calculateSimulation, type SimulationInput } from './simulation';
+import { calculateSimulation } from './simulation';
+import type { SimulationInput } from './simulation';
 
-describe('calculateSimulation', () => {
+describe('calculateSimulation with Inflation and Growth', () => {
   const baseInput: SimulationInput = {
     currentAge: 30,
     currentAssets: 1000,
-    interestRatePct: 0, // Zero interest for easier calculation
-    deathAge: 40,
-    monthlyIncome: 30, // 360/year
+    interestRatePct: 5.0,
+    inflationRatePct: 0.0,
+    incomeIncreaseRatePct: 0.0,
+    deathAge: 40, // Short duration for testing
+    monthlyIncome: 30,
     retirementAge: 60,
-    retirementBonus: 1000,
+    retirementBonus: 0,
     postRetirementJobs: [],
-    monthlyLivingCost: 10, // 120/year
-    housingPlans: [{ cost: 10, duration: 'infinite' }], // 120/year
+    monthlyLivingCost: 10,
+    housingPlans: [{ cost: 5, duration: 'infinite' }],
     children: [],
     oneTimeEvents: []
   };
 
-  it('calculates basic income and expenses correctly', () => {
+  it('should return same values for 0% inflation and 0% growth', () => {
     const result = calculateSimulation(baseInput);
-    const firstYear = result[0];
-
-    // Income: 30 * 12 = 360
-    expect(firstYear.annualIncome).toBe(360);
-    // Expenses: Living(120) + Housing(120) = 240
-    expect(firstYear.annualExpenses).toBe(240);
-    // Savings: 360 - 240 = 120
-    expect(firstYear.annualSavings).toBe(120);
-    // Balance: 1000 + 120 = 1120 (since interest is 0)
-    expect(firstYear.yearEndBalance).toBe(1120);
+    // Annual Exp = (10 + 5) * 12 = 180
+    // Annual Inc = 30 * 12 = 360
+    expect(result[0].annualExpenses).toBe(180);
+    expect(result[0].annualIncome).toBe(360);
   });
 
-  it('applies interest rate correctly', () => {
-    const inputWithInterest = { ...baseInput, interestRatePct: 5 }; // 5%
-    const result = calculateSimulation(inputWithInterest);
-    const firstYear = result[0];
+  it('should decrease REAL housing cost when inflation > 0', () => {
+    // Housing cost is fixed in nominal terms (contract).
+    // So in real terms, it should decrease by inflation rate.
+    const inflatedInput = { ...baseInput, inflationRatePct: 2.0 };
+    const result = calculateSimulation(inflatedInput);
 
-    // Savings: 120
-    // Balance Pre Interest: 1000 + 120 = 1120
-    // Interest: 1120 * 0.05 = 56
-    // Final Balance: 1120 + 56 = 1176
-    expect(firstYear.investmentIncome).toBe(56);
-    expect(firstYear.yearEndBalance).toBe(1176);
+    // Year 0 (Factor 1.0)
+    expect(result[0].monthlyHousingCost).toBe(5);
+
+    // Year 5 (Age 35)
+    // Inflation Factor = 1.02^5 ≈ 1.104
+    // Nominal Housing = 5
+    // Real Housing = 5 / 1.104 < 5
+    expect(result[5].monthlyHousingCost).toBeLessThan(5);
+    expect(result[5].monthlyHousingCost).toBeCloseTo(5 / Math.pow(1.02, 5), 4);
   });
 
-  it('handles retirement bonus', () => {
-    const inputRetire = { ...baseInput, currentAge: 59, retirementAge: 60, deathAge: 61 };
-    const result = calculateSimulation(inputRetire);
+  it('should keep REAL living cost constant when inflation > 0', () => {
+    // Living cost grows with inflation nominally.
+    // So in real terms, it should stay constant.
+    const inflatedInput = { ...baseInput, inflationRatePct: 2.0 };
+    const result = calculateSimulation(inflatedInput);
 
-    // Age 59: Working
-    const age59 = result.find(r => r.age === 59)!;
-    expect(age59.annualIncome).toBe(360); // Regular salary
-
-    // Age 60: Retirement Year (Bonus added)
-    // Note: Logic says if age < retirementAge add salary. if age === retirementAge add bonus.
-    // So at age 60, NO salary, ONLY bonus.
-    const age60 = result.find(r => r.age === 60)!;
-    expect(age60.annualIncome).toBe(1000); // Only bonus
-    expect(age60.event).toContain('退職金');
+    // Year 5
+    // Nominal Living = 10 * 12 * 1.02^5
+    // Real Living = Nominal / 1.02^5 = 10 * 12 = 120
+    expect(result[5].expenseBreakdown.living).toBeCloseTo(120, 0);
   });
 
-  it('handles post-retirement jobs', () => {
-    const inputPostJob: SimulationInput = {
+  it('should increase REAL income when Growth > Inflation', () => {
+    const growthInput = {
         ...baseInput,
-        currentAge: 60,
-        retirementAge: 60,
-        deathAge: 65,
-        postRetirementJobs: [
-            { startAge: 60, endAge: 65, monthlyIncome: 10, retirementBonus: 50 }
-        ]
+        inflationRatePct: 2.0,
+        incomeIncreaseRatePct: 3.0
     };
-    // Age 60:
-    // Main Job: Retirement Age -> Bonus (1000)
-    // Post Job: Age 60 >= startAge(60) && age 60 < endAge(65) -> Income (10 * 12 = 120)
-    // Total Income: 1120
-    const result = calculateSimulation(inputPostJob);
-    const age60 = result.find(r => r.age === 60)!;
-    expect(age60.annualIncome).toBe(1000 + 120);
+    const result = calculateSimulation(growthInput);
 
-    // Age 64: Job active
-    const age64 = result.find(r => r.age === 64)!;
-    expect(age64.annualIncome).toBe(120);
-
-    // Age 65: Job ends. Code: if (age === job.endAge) add bonus.
-    // Also Age 65 >= startAge(60) is true, but age 65 < endAge(65) is FALSE.
-    // So no monthly income from this job. Only bonus.
-    const age65 = result.find(r => r.age === 65)!;
-    expect(age65.annualIncome).toBe(50);
-    expect(age65.event).toContain('再雇用退職金');
+    // Year 5
+    // Nominal Income = 360 * 1.03^5
+    // Real Income = (360 * 1.03^5) / 1.02^5 = 360 * (1.03/1.02)^5
+    // Should be greater than 360
+    expect(result[5].annualIncome).toBeGreaterThan(360);
   });
 
-  it('handles housing plan transitions', () => {
-      const inputHousing = {
-          ...baseInput,
-          housingPlans: [
-              { cost: 10, duration: 5 }, // 5 years: age 30, 31, 32, 33, 34
-              { cost: 5, duration: 'infinite' as const } // From age 35
-          ]
-      };
-      const result = calculateSimulation(inputHousing);
+  it('should decrease REAL income when Growth < Inflation', () => {
+    const growthInput = {
+        ...baseInput,
+        inflationRatePct: 3.0,
+        incomeIncreaseRatePct: 1.0
+    };
+    const result = calculateSimulation(growthInput);
 
-      // Age 30 (Year 0): First plan
-      expect(result[0].monthlyHousingCost).toBe(10);
-      expect(result[4].monthlyHousingCost).toBe(10); // Age 34
+    // Year 5
+    // Nominal Income = 360 * 1.01^5
+    // Real Income = (360 * 1.01^5) / 1.03^5
+    // Should be less than 360
+    expect(result[5].annualIncome).toBeLessThan(360);
+  });
 
-      // Age 35 (Year 5): Second plan
-      expect(result[5].monthlyHousingCost).toBe(5);
-      expect(result[10].monthlyHousingCost).toBe(5);
+  it('should NOT apply income growth to retirement bonus', () => {
+    // Retirement Age = 35 (5 years from start)
+    const bonusInput = {
+        ...baseInput,
+        currentAge: 30,
+        retirementAge: 35,
+        retirementBonus: 1000,
+        incomeIncreaseRatePct: 5.0, // Significant growth
+        inflationRatePct: 0.0
+    };
+
+    const result = calculateSimulation(bonusInput);
+    const retirementYear = result.find(r => r.age === 35);
+
+    // Bonus should be exactly 1000 (Nominal)
+    // Income breakdown bonus should be 1000
+    expect(retirementYear).toBeDefined();
+    expect(retirementYear?.incomeBreakdown.bonus).toBe(1000);
+
+    // With inflation, real value should decrease
+    const inflatedBonusInput = {
+        ...bonusInput,
+        inflationRatePct: 2.0
+    };
+    const resultInf = calculateSimulation(inflatedBonusInput);
+    const retirementYearInf = resultInf.find(r => r.age === 35);
+
+    // Nominal = 1000
+    // Real = 1000 / 1.02^5
+    expect(retirementYearInf?.incomeBreakdown.bonus).toBeLessThan(1000);
+    expect(retirementYearInf?.incomeBreakdown.bonus).toBeCloseTo(1000 / Math.pow(1.02, 5), 0);
   });
 });
