@@ -5,6 +5,7 @@ import {
   Area, AreaChart, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import { Download } from 'lucide-react';
+import { Tooltip as InfoTooltip } from './Tooltip';
 import type { SimulationYearResult } from '../logic/simulation';
 
 type ResultsProps = {
@@ -160,14 +161,17 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
         <MetricCard
           label={`目標${targetAmount}万円到達年齢`}
           value={metrics.targetAgeText}
+          tooltipContent="資産額が目標金額（インフレ調整済）を初めて上回る年齢です。"
         />
         <MetricCard
           label={`${retirementAge}歳時点の資産額`}
           value={metrics.retirementAssetText}
+          tooltipContent="メインの退職年齢時点での総資産額（インフレ調整済）です。"
         />
         <MetricCard
           label={`${retirementAge}歳時点の年間不労所得`}
           value={metrics.retirementIncomeText}
+          tooltipContent="退職年齢時点で発生している不労所得（運用益など・インフレ調整済）の年間金額です。"
         />
       </div>
 
@@ -175,7 +179,10 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
       <div className="space-y-8 mb-8">
         {/* Main Asset Chart (Total Assets vs Target) */}
         <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold text-gray-700 mb-4">総資産推移</h2>
+          <h2 className="text-xl font-semibold text-gray-700 mb-4 flex items-center gap-2">
+            総資産推移
+            <InfoTooltip content="毎年の年末時点での総資産額（インフレ調整済）の推移です。" />
+          </h2>
           <div className="h-[400px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
@@ -194,7 +201,10 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
             {/* Income Breakdown Chart */}
             <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold text-gray-700 mb-4">年間収入内訳</h2>
+            <h2 className="text-xl font-semibold text-gray-700 mb-4 flex items-center gap-2">
+              年間収入内訳
+              <InfoTooltip content="年間の収入内訳（インフレ調整済）です。「運用益」は資産運用による利益を表します。" />
+            </h2>
             <div className="h-[400px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
@@ -215,7 +225,10 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
 
             {/* Expense Breakdown Chart */}
             <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold text-gray-700 mb-4">年間支出内訳</h2>
+            <h2 className="text-xl font-semibold text-gray-700 mb-4 flex items-center gap-2">
+              年間支出内訳
+              <InfoTooltip content="年間の支出内訳（インフレ調整済）です。" />
+            </h2>
             <div className="h-[400px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
@@ -251,12 +264,42 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
             <thead className="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0 z-10">
               <tr>
                 <th className="px-4 py-3 whitespace-nowrap">年齢</th>
-                <th className="px-4 py-3 whitespace-nowrap">イベント</th>
-                <th className="px-4 py-3 whitespace-nowrap text-right">年間収入</th>
-                <th className="px-4 py-3 whitespace-nowrap text-right">年間支出</th>
-                <th className="px-4 py-3 whitespace-nowrap text-right">年間収支(貯蓄)</th>
-                <th className="px-4 py-3 whitespace-nowrap text-right text-green-600">運用益</th>
-                <th className="px-4 py-3 whitespace-nowrap text-right font-bold">年末資産残高</th>
+                <th className="px-4 py-3 whitespace-nowrap">
+                  <div className="flex items-center gap-1">
+                    イベント
+                    <InfoTooltip content="その年に発生する主なライフイベント（退職、子供の誕生・進学など）です。" />
+                  </div>
+                </th>
+                <th className="px-4 py-3 whitespace-nowrap text-right">
+                  <div className="flex items-center justify-end gap-1">
+                    年間収入
+                    <InfoTooltip content="給与、ボーナス、年金、一時収入の合計です（運用益は含みません）。インフレ調整後の現在価値で表示されています。" />
+                  </div>
+                </th>
+                <th className="px-4 py-3 whitespace-nowrap text-right">
+                  <div className="flex items-center justify-end gap-1">
+                    年間支出
+                    <InfoTooltip content="基本生活費、住居費、教育費、一時支出の合計です。インフレ調整後の現在価値で表示されています。" />
+                  </div>
+                </th>
+                <th className="px-4 py-3 whitespace-nowrap text-right">
+                  <div className="flex items-center justify-end gap-1">
+                    年間収支(貯蓄)
+                    <InfoTooltip content="年間収入 － 年間支出 です。プラスなら資産増、マイナスなら資産取り崩しとなります。" />
+                  </div>
+                </th>
+                <th className="px-4 py-3 whitespace-nowrap text-right text-green-600">
+                  <div className="flex items-center justify-end gap-1">
+                    運用益
+                    <InfoTooltip content="期首資産 × 想定年利 で計算された運用益です。全額再投資される前提です。" />
+                  </div>
+                </th>
+                <th className="px-4 py-3 whitespace-nowrap text-right font-bold">
+                  <div className="flex items-center justify-end gap-1">
+                    年末資産残高
+                    <InfoTooltip content="運用益を加えた年末時点の総資産額です（現在価値）。" />
+                  </div>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -294,10 +337,13 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
   );
 }
 
-function MetricCard({ label, value }: { label: string, value: string }) {
+function MetricCard({ label, value, tooltipContent }: { label: string, value: string, tooltipContent?: React.ReactNode }) {
   return (
     <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500">
-      <div className="text-sm text-gray-500 mb-1">{label}</div>
+      <div className="text-sm text-gray-500 mb-1 flex items-center gap-1">
+        {label}
+        {tooltipContent && <InfoTooltip content={tooltipContent} />}
+      </div>
       <div className="text-3xl font-bold text-gray-800">{value}</div>
     </div>
   );
