@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { calculateSimulation, SimulationInput } from './simulation';
+import { calculateSimulation } from './simulation';
+import type { SimulationInput } from './simulation';
 
 describe('calculateSimulation with Inflation and Growth', () => {
   const baseInput: SimulationInput = {
