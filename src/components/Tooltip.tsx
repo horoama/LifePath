@@ -53,7 +53,7 @@ export function Tooltip({ content }: TooltipProps) {
 
   // Click outside to close
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
+    const handleClickOutside = (e: Event) => {
       if (isVisible && iconRef.current && !iconRef.current.contains(e.target as Node)) {
         // We also need to check if the click was inside the tooltip content
         // But since the tooltip is in a portal, it's tricky.
