@@ -11,6 +11,7 @@ function App() {
     currentAge: 32,
     currentAssets: 700,
     interestRatePct: 5.0,
+    inflationRatePct: 0.0, // Initialize inflation rate
     deathAge: 90,
     monthlyIncome: 45,
     retirementAge: 60,

@@ -113,6 +113,7 @@ export function Sidebar({ input, setInput, targetAmount, setTargetAmount }: Side
             <NumberInput label="想定寿命 (歳)" value={input.deathAge || 100} onChange={handleDeathAgeChange} />
             <NumberInput label="現在の総資産 (万円)" value={input.currentAssets} step={10} onChange={v => handleChange('currentAssets', v)} />
             <NumberInput label="想定年利 (%)" value={input.interestRatePct} step={0.1} onChange={v => handleChange('interestRatePct', v)} />
+            <NumberInput label="想定インフレ率 (%)" value={input.inflationRatePct ?? 0} step={0.1} onChange={v => handleChange('inflationRatePct', v)} />
             <NumberInput label="目標資産額 (万円)" value={targetAmount} step={100} onChange={setTargetAmount} />
           </div>
         </section>

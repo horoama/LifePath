@@ -27,7 +27,8 @@ export type SimulationInput = {
   currentAge: number;
   currentAssets: number;
   interestRatePct: number;
-  deathAge: number; // New field for simulation end age
+  inflationRatePct: number; // New field for inflation rate
+  deathAge: number;
 
   // Main Job
   monthlyIncome: number;
@@ -102,7 +103,8 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
     currentAge,
     currentAssets,
     interestRatePct,
-    deathAge = 100, // Default fallback if undefined
+    inflationRatePct = 0, // Default to 0 if undefined
+    deathAge = 100,
     monthlyIncome,
     retirementAge,
     retirementBonus,
@@ -114,6 +116,8 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
   } = input;
 
   const interestRate = interestRatePct / 100.0;
+  const inflationRate = inflationRatePct / 100.0;
+
   const simulationData: SimulationYearResult[] = [];
 
   let assets = currentAssets;
@@ -126,12 +130,16 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
   // Simulation loop until deathAge
   while (age <= deathAge) {
     const yearsPassed = yearIndex;
+    // Calculate inflation factor for the current year: (1 + r)^n
+    const inflationFactor = Math.pow(1 + inflationRate, yearsPassed);
+
     const eventNotes: string[] = [];
 
-    // --- Income Calculation ---
+    // --- Income Calculation (Nominal) ---
+    // Income is NOT inflated based on user requirements (only expenses)
     let mainJobIncome = 0;
     let mainJobBonus = 0;
-    let postRetirementIncome = 0; // Includes monthly + bonus
+    let postRetirementIncome = 0;
     let oneTimeIncome = 0;
 
     // 1. Main Job
@@ -162,49 +170,48 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
       }
     });
 
-    const annualIncome = mainJobIncome + mainJobBonus + postRetirementIncome + oneTimeIncome;
+    const annualIncomeNominal = mainJobIncome + mainJobBonus + postRetirementIncome + oneTimeIncome;
 
-    // --- Expense Calculation ---
+    // --- Expense Calculation (Nominal with Inflation) ---
+    // User requested inflation on: Housing, Education, Living Cost
+
     let basicLivingExpense = 0;
     let housingExpense = 0;
     let childExpense = 0;
     let oneTimeExpense = 0;
 
-    // 1. Basic Living Cost
-    basicLivingExpense += monthlyLivingCost * 12;
+    // 1. Basic Living Cost (Inflated)
+    // nominal = base * inflationFactor
+    basicLivingExpense += (monthlyLivingCost * 12) * inflationFactor;
 
-    // 2. Housing Cost
-    let currentHousingCost = 0;
+    // 2. Housing Cost (Inflated)
+    let currentHousingCostBase = 0;
     let cumulativeYears = 0;
     let planFound = false;
 
     for (const plan of housingPlans) {
       const { duration, cost } = plan;
       if (duration === 'infinite') {
-        currentHousingCost = cost;
+        currentHousingCostBase = cost;
         planFound = true;
         break;
       }
       const dur = duration as number;
       if (yearsPassed < cumulativeYears + dur) {
-        currentHousingCost = cost;
+        currentHousingCostBase = cost;
         planFound = true;
         break;
       }
       cumulativeYears += dur;
     }
-    // Fallback if no plan matches (should ideally rely on infinite last plan)
     if (!planFound && housingPlans.length > 0) {
-        // If we ran out of plans, assume the last plan's cost continues if it was intended to be permanent,
-        // but technically the logic above handles 'infinite'.
-        // If we get here, it means all finite plans expired and no infinite plan exists.
-        // We'll just take the last plan's cost as a fallback or 0?
-        // Original logic took last plan cost.
-        currentHousingCost = housingPlans[housingPlans.length - 1].cost;
+        currentHousingCostBase = housingPlans[housingPlans.length - 1].cost;
     }
-    housingExpense += currentHousingCost * 12;
+    // Apply inflation to housing cost
+    const currentHousingCostNominal = currentHousingCostBase * inflationFactor;
+    housingExpense += currentHousingCostNominal * 12;
 
-    // 3. Children Expenses (Education + Childcare)
+    // 3. Children Expenses (Inflated)
     children.forEach((child, index) => {
       const childAge = yearsPassed - child.birthYearOffset;
       const costs = EDU_COSTS_MAP[child.educationPattern] || EDU_COSTS_MAP["全公立"];
@@ -215,20 +222,20 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
 
       // Childcare (0-22)
       if (childAge >= 0 && childAge <= 22) {
-        childExpense += child.monthlyChildcareCost * 12;
+        childExpense += (child.monthlyChildcareCost * 12) * inflationFactor;
       }
 
       // Education
-      let eduCost = 0;
-      if (childAge >= 7 && childAge <= 12) eduCost = costs.primary;
-      else if (childAge >= 13 && childAge <= 15) eduCost = costs.middle;
-      else if (childAge >= 16 && childAge <= 18) eduCost = costs.high;
-      else if (childAge >= 19 && childAge <= 22) eduCost = costs.uni;
+      let eduCostBase = 0;
+      if (childAge >= 7 && childAge <= 12) eduCostBase = costs.primary;
+      else if (childAge >= 13 && childAge <= 15) eduCostBase = costs.middle;
+      else if (childAge >= 16 && childAge <= 18) eduCostBase = costs.high;
+      else if (childAge >= 19 && childAge <= 22) eduCostBase = costs.uni;
 
-      childExpense += eduCost;
+      childExpense += eduCostBase * inflationFactor;
     });
 
-    // 4. One-time Expenses
+    // 4. One-time Expenses (Not Inflated per requirements/assumption)
     oneTimeEvents.forEach(evt => {
       if (evt.type === 'expense' && evt.age === age) {
         oneTimeExpense += evt.amount;
@@ -236,40 +243,47 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
       }
     });
 
-    const annualExpenses = basicLivingExpense + housingExpense + childExpense + oneTimeExpense;
+    const annualExpensesNominal = basicLivingExpense + housingExpense + childExpense + oneTimeExpense;
 
-    // --- Balance Update ---
-    const netSavings = annualIncome - annualExpenses;
-    totalPrincipal += netSavings;
+    // --- Balance Update (Nominal) ---
+    const netSavingsNominal = annualIncomeNominal - annualExpensesNominal;
 
-    const balancePreInterest = assets + netSavings;
-    const investmentIncome = balancePreInterest * interestRate;
-    totalInvestmentIncome += investmentIncome;
-    assets = balancePreInterest + investmentIncome;
+    // Principal update (nominal)
+    totalPrincipal += netSavingsNominal;
+
+    const balancePreInterest = assets + netSavingsNominal;
+    const investmentIncomeNominal = balancePreInterest * interestRate;
+    totalInvestmentIncome += investmentIncomeNominal;
+
+    assets = balancePreInterest + investmentIncomeNominal;
+
+    // --- Convert to Real Values (Present Value) for Display ---
+    // Rule: Real Value = Nominal Value / Inflation Factor
+    // This allows the user to see the simulation in "today's money"
 
     simulationData.push({
       age,
       yearsPassed,
       event: eventNotes.join(', '),
-      monthlyHousingCost: currentHousingCost,
-      annualIncome,
-      annualExpenses,
-      annualSavings: netSavings,
-      yearEndBalance: Math.floor(assets),
-      investmentIncome: Math.floor(investmentIncome),
-      totalPrincipal: Math.floor(totalPrincipal),
-      totalInvestmentIncome: Math.floor(totalInvestmentIncome),
+      monthlyHousingCost: currentHousingCostNominal / inflationFactor, // Should match input cost
+      annualIncome: annualIncomeNominal / inflationFactor,
+      annualExpenses: annualExpensesNominal / inflationFactor,
+      annualSavings: netSavingsNominal / inflationFactor,
+      yearEndBalance: Math.floor(assets / inflationFactor),
+      investmentIncome: Math.floor(investmentIncomeNominal / inflationFactor),
+      totalPrincipal: Math.floor(totalPrincipal / inflationFactor),
+      totalInvestmentIncome: Math.floor(totalInvestmentIncome / inflationFactor),
       incomeBreakdown: {
-        salary: mainJobIncome,
-        bonus: mainJobBonus,
-        pension: postRetirementIncome,
-        oneTime: oneTimeIncome
+        salary: mainJobIncome / inflationFactor,
+        bonus: mainJobBonus / inflationFactor,
+        pension: postRetirementIncome / inflationFactor,
+        oneTime: oneTimeIncome / inflationFactor
       },
       expenseBreakdown: {
-        living: basicLivingExpense,
-        housing: housingExpense,
-        education: childExpense,
-        oneTime: oneTimeExpense
+        living: basicLivingExpense / inflationFactor,
+        housing: housingExpense / inflationFactor,
+        education: childExpense / inflationFactor,
+        oneTime: oneTimeExpense / inflationFactor
       }
     });
 
