@@ -27,7 +27,8 @@ export type SimulationInput = {
   currentAge: number;
   currentAssets: number;
   interestRatePct: number;
-  inflationRatePct: number; // New field for inflation rate
+  inflationRatePct: number;
+  incomeIncreaseRatePct: number; // New field for income growth
   deathAge: number;
 
   // Main Job
@@ -104,6 +105,7 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
     currentAssets,
     interestRatePct,
     inflationRatePct = 0, // Default to 0 if undefined
+    incomeIncreaseRatePct = 0, // Default to 0 if undefined
     deathAge = 100,
     monthlyIncome,
     retirementAge,
@@ -117,6 +119,7 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
 
   const interestRate = interestRatePct / 100.0;
   const inflationRate = inflationRatePct / 100.0;
+  const incomeIncreaseRate = incomeIncreaseRatePct / 100.0;
 
   const simulationData: SimulationYearResult[] = [];
 
@@ -133,10 +136,13 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
     // Calculate inflation factor for the current year: (1 + r)^n
     const inflationFactor = Math.pow(1 + inflationRate, yearsPassed);
 
+    // Calculate income growth factor (for nominal calculation)
+    const incomeGrowthFactor = Math.pow(1 + incomeIncreaseRate, yearsPassed);
+
     const eventNotes: string[] = [];
 
-    // --- Income Calculation (Nominal) ---
-    // Income is NOT inflated based on user requirements (only expenses)
+    // --- Income Calculation (Nominal with Growth) ---
+    // Apply income growth only to Main Job Income and Bonus
     let mainJobIncome = 0;
     let mainJobBonus = 0;
     let postRetirementIncome = 0;
@@ -144,14 +150,18 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
 
     // 1. Main Job
     if (age < retirementAge) {
-      mainJobIncome += monthlyIncome * 12;
+      // Monthly income increases annually by growth rate
+      mainJobIncome += (monthlyIncome * 12) * incomeGrowthFactor;
     }
     if (age === retirementAge) {
-      mainJobBonus += retirementBonus;
-      eventNotes.push(`退職金(+${retirementBonus})`);
+      // Retirement bonus is typically fixed or calculated differently, but here we treat it as fixed nominal?
+      // Or does it grow? Usually retirement bonus is based on final salary.
+      // Let's assume it grows with income increase rate as it's often salary-linked.
+      mainJobBonus += retirementBonus * incomeGrowthFactor;
+      eventNotes.push(`退職金(+${Math.floor(mainJobBonus)})`);
     }
 
-    // 2. Post-Retirement Jobs
+    // 2. Post-Retirement Jobs (Assume fixed nominal for now unless specified)
     postRetirementJobs.forEach(job => {
       if (age >= job.startAge && age < job.endAge) {
         postRetirementIncome += job.monthlyIncome * 12;
@@ -173,7 +183,8 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
     const annualIncomeNominal = mainJobIncome + mainJobBonus + postRetirementIncome + oneTimeIncome;
 
     // --- Expense Calculation (Nominal with Inflation) ---
-    // User requested inflation on: Housing, Education, Living Cost
+    // Inflation applies to: Living Cost, Education
+    // NOT Housing (fixed contract assumption)
 
     let basicLivingExpense = 0;
     let housingExpense = 0;
@@ -184,7 +195,7 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
     // nominal = base * inflationFactor
     basicLivingExpense += (monthlyLivingCost * 12) * inflationFactor;
 
-    // 2. Housing Cost (Inflated)
+    // 2. Housing Cost (NOT Inflated - Fixed Nominal)
     let currentHousingCostBase = 0;
     let cumulativeYears = 0;
     let planFound = false;
@@ -207,8 +218,8 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
     if (!planFound && housingPlans.length > 0) {
         currentHousingCostBase = housingPlans[housingPlans.length - 1].cost;
     }
-    // Apply inflation to housing cost
-    const currentHousingCostNominal = currentHousingCostBase * inflationFactor;
+    // No inflation factor applied to housing
+    const currentHousingCostNominal = currentHousingCostBase;
     housingExpense += currentHousingCostNominal * 12;
 
     // 3. Children Expenses (Inflated)
@@ -235,7 +246,7 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
       childExpense += eduCostBase * inflationFactor;
     });
 
-    // 4. One-time Expenses (Not Inflated per requirements/assumption)
+    // 4. One-time Expenses (Not Inflated)
     oneTimeEvents.forEach(evt => {
       if (evt.type === 'expense' && evt.age === age) {
         oneTimeExpense += evt.amount;
@@ -259,13 +270,12 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
 
     // --- Convert to Real Values (Present Value) for Display ---
     // Rule: Real Value = Nominal Value / Inflation Factor
-    // This allows the user to see the simulation in "today's money"
 
     simulationData.push({
       age,
       yearsPassed,
       event: eventNotes.join(', '),
-      monthlyHousingCost: currentHousingCostNominal / inflationFactor, // Should match input cost
+      monthlyHousingCost: currentHousingCostNominal / inflationFactor, // Will decrease in real terms
       annualIncome: annualIncomeNominal / inflationFactor,
       annualExpenses: annualExpensesNominal / inflationFactor,
       annualSavings: netSavingsNominal / inflationFactor,

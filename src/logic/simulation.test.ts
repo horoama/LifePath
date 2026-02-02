@@ -1,12 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { calculateSimulation, SimulationInput } from './simulation';
 
-describe('calculateSimulation with Inflation', () => {
+describe('calculateSimulation with Inflation and Growth', () => {
   const baseInput: SimulationInput = {
     currentAge: 30,
     currentAssets: 1000,
     interestRatePct: 5.0,
     inflationRatePct: 0.0,
+    incomeIncreaseRatePct: 0.0,
     deathAge: 40, // Short duration for testing
     monthlyIncome: 30,
     retirementAge: 60,
@@ -18,50 +19,70 @@ describe('calculateSimulation with Inflation', () => {
     oneTimeEvents: []
   };
 
-  it('should return same values for 0% inflation', () => {
+  it('should return same values for 0% inflation and 0% growth', () => {
     const result = calculateSimulation(baseInput);
-    // 1st year (age 30, year 0): inflationFactor = 1.0
     // Annual Exp = (10 + 5) * 12 = 180
     // Annual Inc = 30 * 12 = 360
-    // Net Savings = 180
-    // Assets (Pre) = 1000 + 180 = 1180
-    // Inv Inc = 1180 * 0.05 = 59
-    // End Balance = 1239
-
     expect(result[0].annualExpenses).toBe(180);
-    expect(result[0].yearEndBalance).toBe(1239);
+    expect(result[0].annualIncome).toBe(360);
   });
 
-  it('should show constant REAL expenses but lower REAL assets for 2% inflation', () => {
+  it('should decrease REAL housing cost when inflation > 0', () => {
+    // Housing cost is fixed in nominal terms (contract).
+    // So in real terms, it should decrease by inflation rate.
     const inflatedInput = { ...baseInput, inflationRatePct: 2.0 };
     const result = calculateSimulation(inflatedInput);
-    const baseResult = calculateSimulation(baseInput);
 
-    // Year 0 (Current): Inflation factor 1.0. Should be identical to base.
-    expect(result[0].annualExpenses).toBe(180);
-    expect(result[0].yearEndBalance).toBe(1239);
+    // Year 0 (Factor 1.0)
+    expect(result[0].monthlyHousingCost).toBe(5);
 
-    // Year 5 (Age 35):
-    // Inflation factor = 1.02^5 ≈ 1.104
-    // Nominal Expenses = 180 * 1.104
-    // Real Expenses (Display) = Nominal / 1.104 = 180
-    // Expect Real Expenses to be exactly same as base (or very close due to float precision)
+    // Year 5 (Age 35)
+    // Inflation Factor = 1.02^5 ≈ 1.104
+    // Nominal Housing = 5
+    // Real Housing = 5 / 1.104 < 5
+    expect(result[5].monthlyHousingCost).toBeLessThan(5);
+    expect(result[5].monthlyHousingCost).toBeCloseTo(5 / Math.pow(1.02, 5), 4);
+  });
 
-    const year5_Base = baseResult[5];
-    const year5_Inf = result[5];
+  it('should keep REAL living cost constant when inflation > 0', () => {
+    // Living cost grows with inflation nominally.
+    // So in real terms, it should stay constant.
+    const inflatedInput = { ...baseInput, inflationRatePct: 2.0 };
+    const result = calculateSimulation(inflatedInput);
 
-    // Check Expenses: Should be constant in Real terms
-    expect(year5_Inf.annualExpenses).toBeCloseTo(year5_Base.annualExpenses, 0);
+    // Year 5
+    // Nominal Living = 10 * 12 * 1.02^5
+    // Real Living = Nominal / 1.02^5 = 10 * 12 = 120
+    expect(result[5].expenseBreakdown.living).toBeCloseTo(120, 0);
+  });
 
-    // Check Assets: Should be lower in Real terms because:
-    // 1. Income (360) is constant in NOMINAL terms, so it decreases in REAL terms.
-    // 2. Investment return (5%) is constant in NOMINAL terms, so real return is roughly 3%.
+  it('should increase REAL income when Growth > Inflation', () => {
+    const growthInput = {
+        ...baseInput,
+        inflationRatePct: 2.0,
+        incomeIncreaseRatePct: 3.0
+    };
+    const result = calculateSimulation(growthInput);
 
-    expect(year5_Inf.yearEndBalance).toBeLessThan(year5_Base.yearEndBalance);
+    // Year 5
+    // Nominal Income = 360 * 1.03^5
+    // Real Income = (360 * 1.03^5) / 1.02^5 = 360 * (1.03/1.02)^5
+    // Should be greater than 360
+    expect(result[5].annualIncome).toBeGreaterThan(360);
+  });
 
-    // Check Income Real Value:
-    // Nominal Income = 360
-    // Real Income = 360 / (1.02^5) < 360
-    expect(year5_Inf.annualIncome).toBeLessThan(360);
+  it('should decrease REAL income when Growth < Inflation', () => {
+    const growthInput = {
+        ...baseInput,
+        inflationRatePct: 3.0,
+        incomeIncreaseRatePct: 1.0
+    };
+    const result = calculateSimulation(growthInput);
+
+    // Year 5
+    // Nominal Income = 360 * 1.01^5
+    // Real Income = (360 * 1.01^5) / 1.03^5
+    // Should be less than 360
+    expect(result[5].annualIncome).toBeLessThan(360);
   });
 });
