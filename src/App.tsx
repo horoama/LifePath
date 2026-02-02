@@ -6,26 +6,25 @@ import type { SimulationInput } from './logic/simulation';
 import { Settings, BarChart3 } from 'lucide-react';
 
 function App() {
-  const [targetAmount, setTargetAmount] = useState<number>(5000);
+  const [targetAmount, setTargetAmount] = useState<number>(3000);
   const [activeTab, setActiveTab] = useState<'input' | 'result'>('input');
 
   const [input, setInput] = useState<SimulationInput>({
-    currentAge: 32,
-    currentAssets: 700,
-    interestRatePct: 5.0,
+    currentAge: 30,
+    currentAssets: 500,
+    interestRatePct: 3.0,
     inflationRatePct: 0.0,
     incomeIncreaseRatePct: 0.0,
     deathAge: 90,
-    monthlyIncome: 45,
-    retirementAge: 60,
-    retirementBonus: 1500,
+    monthlyIncome: 30,
+    retirementAge: 65,
+    retirementBonus: 1000,
     postRetirementJobs: [
-      { startAge: 60, endAge: 65, monthlyIncome: 20, retirementBonus: 0 }
+      { startAge: 65, endAge: 70, monthlyIncome: 15, retirementBonus: 0 }
     ],
-    monthlyLivingCost: 25,
+    monthlyLivingCost: 15,
     housingPlans: [
-      { cost: 10, duration: 10 },
-      { cost: 12, duration: 'infinite' }
+      { cost: 10, duration: 'infinite' }
     ],
     children: [
       { birthYearOffset: 2, educationPattern: '全公立', monthlyChildcareCost: 5 }
