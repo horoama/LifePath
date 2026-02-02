@@ -2,6 +2,7 @@ import { useState, useEffect, useId } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import type { SimulationInput, HousingPlan, PostRetirementJob, Child, OneTimeEvent } from '../logic/simulation';
 import { EDUCATION_PATTERNS } from '../logic/simulation';
+import { Tooltip } from './Tooltip';
 
 type SidebarProps = {
   input: SimulationInput;
@@ -97,6 +98,68 @@ export function Sidebar({ input, setInput, targetAmount, setTargetAmount }: Side
     handleChange('oneTimeEvents', newEvents);
   };
 
+  // Tooltip Content Constants
+  const TOOLTIPS = {
+    currentAge: "シミュレーションを開始する現在の年齢です。",
+    deathAge: "シミュレーションを終了する年齢です。この年齢まで資産が持つかを計算します。",
+    currentAssets: "現在保有している金融資産の総額（現金、預金、株式、投資信託など）を入力してください。",
+    interestRate: "保有資産全体の想定リターン（年利）です。インフレ率を含まない名目利回りを設定してください。",
+    inflationRate: "生活費や教育費の毎年の上昇率です。結果はインフレ調整後の「現在価値」で表示されます。",
+    targetAmount: "老後資金として確保したい目標金額です。グラフ上に目標ラインとして表示されます。",
+    monthlyIncome: "現在の手取り月収（ボーナスを除く）です。",
+    incomeIncreaseRate: "給与の毎年の上昇率（昇給率）です。将来の収入増を見込む場合に設定します。",
+    retirementAge: "メインの仕事を退職する年齢です。",
+    retirementBonus: "退職時に受け取る退職金（手取り額）です。",
+    postRetirementJob: "定年退職後の再雇用やアルバイト、または公的年金などの収入を設定します。",
+    monthlyLivingCost: "住居費と教育費を除いた、毎月の基本的な生活費です。インフレ率に応じて毎年上昇します。",
+    housingCost: "家賃や住宅ローン返済額など、住居にかかる月額費用です。インフレ率の影響を受けません（固定費扱い）。",
+    housingDuration: "その住居費が続く期間（年数）です。",
+    childBirth: "現在から何年後に子供が生まれるか（または生まれたか）を設定します。過去の場合はマイナス値を入力可能です。",
+    childCareCost: "子供1人あたりの毎月の養育費（食費・被服費・医療費など）です。22歳まで発生し、インフレ率の影響を受けます。",
+    eduPattern: (
+      <div className="space-y-2">
+        <p>進路ごとの年間教育費目安（学校納付金＋学校外活動費）</p>
+        <table className="w-full text-left border-collapse text-[10px] sm:text-xs">
+          <thead>
+            <tr className="border-b border-gray-600">
+              <th className="py-1">コース</th>
+              <th className="py-1">小</th>
+              <th className="py-1">中</th>
+              <th className="py-1">高</th>
+              <th className="py-1">大</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="border-b border-gray-700">
+              <td className="py-1">全公立</td>
+              <td>40</td>
+              <td>40</td>
+              <td>40</td>
+              <td>100</td>
+            </tr>
+            <tr className="border-b border-gray-700">
+              <td className="py-1">全私立</td>
+              <td>120</td>
+              <td>120</td>
+              <td>120</td>
+              <td>150</td>
+            </tr>
+            <tr>
+              <td className="py-1">大のみ私</td>
+              <td>40</td>
+              <td>40</td>
+              <td>40</td>
+              <td>150</td>
+            </tr>
+          </tbody>
+        </table>
+        <p className="text-[10px] text-gray-300">※単位: 万円/年。これとは別に上記の「養育費」がかかります。</p>
+      </div>
+    ),
+    eventAge: "イベントが発生する年齢です。",
+    eventAmount: "イベントにかかる費用、または臨時収入の金額です。",
+  };
+
   return (
     <div className="w-full lg:w-96 bg-white p-6 shadow-lg overflow-y-auto h-screen sticky top-0">
       <h2 className="text-xl font-bold mb-6 text-gray-800 flex items-center gap-2">
@@ -109,12 +172,12 @@ export function Sidebar({ input, setInput, targetAmount, setTargetAmount }: Side
         <section>
           <h3 className="font-bold text-gray-700 mb-3 border-b pb-1">基本情報</h3>
           <div className="space-y-3">
-            <NumberInput label="現在の年齢" value={input.currentAge} onChange={v => handleChange('currentAge', v)} />
-            <NumberInput label="想定寿命 (歳)" value={input.deathAge || 100} onChange={handleDeathAgeChange} />
-            <NumberInput label="現在の総資産 (万円)" value={input.currentAssets} step={10} onChange={v => handleChange('currentAssets', v)} />
-            <NumberInput label="想定年利 (%)" value={input.interestRatePct} step={0.1} onChange={v => handleChange('interestRatePct', v)} />
-            <NumberInput label="想定インフレ率 (%)" value={input.inflationRatePct ?? 0} step={0.1} onChange={v => handleChange('inflationRatePct', v)} />
-            <NumberInput label="目標資産額 (万円)" value={targetAmount} step={100} onChange={setTargetAmount} />
+            <NumberInput label="現在の年齢" value={input.currentAge} onChange={v => handleChange('currentAge', v)} tooltipContent={TOOLTIPS.currentAge} />
+            <NumberInput label="想定寿命 (歳)" value={input.deathAge || 100} onChange={handleDeathAgeChange} tooltipContent={TOOLTIPS.deathAge} />
+            <NumberInput label="現在の総資産 (万円)" value={input.currentAssets} step={10} onChange={v => handleChange('currentAssets', v)} tooltipContent={TOOLTIPS.currentAssets} />
+            <NumberInput label="想定年利 (%)" value={input.interestRatePct} step={0.1} onChange={v => handleChange('interestRatePct', v)} tooltipContent={TOOLTIPS.interestRate} />
+            <NumberInput label="想定インフレ率 (%)" value={input.inflationRatePct ?? 0} step={0.1} onChange={v => handleChange('inflationRatePct', v)} tooltipContent={TOOLTIPS.inflationRate} />
+            <NumberInput label="目標資産額 (万円)" value={targetAmount} step={100} onChange={setTargetAmount} tooltipContent={TOOLTIPS.targetAmount} />
           </div>
         </section>
 
@@ -122,16 +185,19 @@ export function Sidebar({ input, setInput, targetAmount, setTargetAmount }: Side
         <section>
           <h3 className="font-bold text-gray-700 mb-3 border-b pb-1">現在の収入 (メイン)</h3>
           <div className="space-y-3">
-            <NumberInput label="手取り月収 (万円)" value={input.monthlyIncome} onChange={v => handleChange('monthlyIncome', v)} />
-            <NumberInput label="想定昇給率 (%)" value={input.incomeIncreaseRatePct ?? 0} step={0.1} onChange={v => handleChange('incomeIncreaseRatePct', v)} />
-            <NumberInput label="退職年齢" value={input.retirementAge} onChange={v => handleChange('retirementAge', v)} />
-            <NumberInput label="退職金 (万円)" value={input.retirementBonus} step={100} onChange={v => handleChange('retirementBonus', v)} />
+            <NumberInput label="手取り月収 (万円)" value={input.monthlyIncome} onChange={v => handleChange('monthlyIncome', v)} tooltipContent={TOOLTIPS.monthlyIncome} />
+            <NumberInput label="想定昇給率 (%)" value={input.incomeIncreaseRatePct ?? 0} step={0.1} onChange={v => handleChange('incomeIncreaseRatePct', v)} tooltipContent={TOOLTIPS.incomeIncreaseRate} />
+            <NumberInput label="退職年齢" value={input.retirementAge} onChange={v => handleChange('retirementAge', v)} tooltipContent={TOOLTIPS.retirementAge} />
+            <NumberInput label="退職金 (万円)" value={input.retirementBonus} step={100} onChange={v => handleChange('retirementBonus', v)} tooltipContent={TOOLTIPS.retirementBonus} />
           </div>
         </section>
 
         {/* 3. Post-Retirement Jobs */}
         <section>
-          <h3 className="font-bold text-gray-700 mb-3 border-b pb-1">退職後の仕事・再雇用・年金</h3>
+          <h3 className="font-bold text-gray-700 mb-3 border-b pb-1 flex items-center">
+            退職後の仕事・再雇用・年金
+            <Tooltip content={TOOLTIPS.postRetirementJob} />
+          </h3>
           <div className="space-y-4">
             {input.postRetirementJobs.map((job, i) => (
               <div key={i} className="bg-gray-50 p-3 rounded border border-gray-200 relative">
@@ -156,7 +222,7 @@ export function Sidebar({ input, setInput, targetAmount, setTargetAmount }: Side
         {/* 4. Basic Expenses */}
         <section>
           <h3 className="font-bold text-gray-700 mb-3 border-b pb-1">基本支出</h3>
-          <NumberInput label="基本生活費 (住居・教育除く月額・万円)" value={input.monthlyLivingCost} onChange={v => handleChange('monthlyLivingCost', v)} />
+          <NumberInput label="基本生活費 (住居・教育除く月額・万円)" value={input.monthlyLivingCost} onChange={v => handleChange('monthlyLivingCost', v)} tooltipContent={TOOLTIPS.monthlyLivingCost} />
         </section>
 
         {/* 5. Housing */}
@@ -170,19 +236,13 @@ export function Sidebar({ input, setInput, targetAmount, setTargetAmount }: Side
                 <div key={i} className="bg-gray-50 p-3 rounded border border-gray-200 relative">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-sm font-medium text-gray-700">プラン {i + 1}</span>
-                    {/* Only allow removing if not the last one, or if we want to remove the last one and make previous one infinite?
-                        Logic: removeHousingPlan handles making the new last one infinite.
-                        But if there's only 1 plan, we shouldn't delete it? Or if we delete it, we have 0 plans?
-                        Logic in simulation.ts handles 0 plans (cost 0? or crash?).
-                        Usually we should keep at least 1 plan.
-                    */}
                     {input.housingPlans.length > 1 && (
                       <button onClick={() => removeHousingPlan(i)} className="text-red-500 hover:text-red-700">
                         <Trash2 size={16} />
                       </button>
                     )}
                   </div>
-                  <NumberInput label="住宅費 (月額・万円)" value={plan.cost} onChange={v => updateHousingPlan(i, 'cost', v)} className="mb-2" />
+                  <NumberInput label="住宅費 (月額・万円)" value={plan.cost} onChange={v => updateHousingPlan(i, 'cost', v)} className="mb-2" tooltipContent={TOOLTIPS.housingCost} />
 
                   {isLast ? (
                     <div className="flex items-center gap-2 mb-2 p-2 bg-blue-50 rounded">
@@ -190,10 +250,7 @@ export function Sidebar({ input, setInput, targetAmount, setTargetAmount }: Side
                     </div>
                   ) : (
                     <>
-                        <div className="flex items-center gap-2 mb-2 hidden">
-                           {/* Hidden checkbox for non-last items, they are strictly finite duration */}
-                        </div>
-                        <NumberInput label="期間 (年)" value={plan.duration as number} onChange={v => updateHousingPlan(i, 'duration', v)} />
+                        <NumberInput label="期間 (年)" value={plan.duration as number} onChange={v => updateHousingPlan(i, 'duration', v)} tooltipContent={TOOLTIPS.housingDuration} />
                     </>
                   )}
                 </div>
@@ -215,10 +272,13 @@ export function Sidebar({ input, setInput, targetAmount, setTargetAmount }: Side
                     <Trash2 size={16} />
                   </button>
                 </div>
-                <NumberInput label="誕生時期 (何年後)" value={child.birthYearOffset} onChange={v => updateChild(i, 'birthYearOffset', v)} className="mb-2" />
-                <NumberInput label="養育費 (22歳まで月額・万円)" value={child.monthlyChildcareCost} onChange={v => updateChild(i, 'monthlyChildcareCost', v)} className="mb-2" />
+                <NumberInput label="誕生時期 (何年後)" value={child.birthYearOffset} onChange={v => updateChild(i, 'birthYearOffset', v)} className="mb-2" tooltipContent={TOOLTIPS.childBirth} />
+                <NumberInput label="養育費 (22歳まで月額・万円)" value={child.monthlyChildcareCost} onChange={v => updateChild(i, 'monthlyChildcareCost', v)} className="mb-2" tooltipContent={TOOLTIPS.childCareCost} />
                 <div>
-                  <label className="block text-xs text-gray-600 mb-1">進学コース</label>
+                  <label className="block text-xs text-gray-600 mb-1 flex items-center">
+                    進学コース
+                    <Tooltip content={TOOLTIPS.eduPattern} />
+                  </label>
                   <select
                     value={child.educationPattern}
                     onChange={(e) => updateChild(i, 'educationPattern', e.target.value as Child['educationPattern'])}
@@ -257,8 +317,8 @@ export function Sidebar({ input, setInput, targetAmount, setTargetAmount }: Side
                     />
                 </div>
                 <div className="grid grid-cols-2 gap-2 mb-2">
-                    <NumberInput label="年齢" value={evt.age} onChange={v => updateEvent(i, 'age', v)} />
-                    <NumberInput label="金額 (万円)" value={evt.amount} onChange={v => updateEvent(i, 'amount', v)} />
+                    <NumberInput label="年齢" value={evt.age} onChange={v => updateEvent(i, 'age', v)} tooltipContent={TOOLTIPS.eventAge} />
+                    <NumberInput label="金額 (万円)" value={evt.amount} onChange={v => updateEvent(i, 'amount', v)} tooltipContent={TOOLTIPS.eventAmount} />
                 </div>
                 <div className="flex items-center gap-4">
                     <label className="flex items-center gap-2 text-sm text-gray-600">
@@ -289,7 +349,7 @@ export function Sidebar({ input, setInput, targetAmount, setTargetAmount }: Side
 }
 
 // Helper components
-function NumberInput({ label, value, onChange, step = 1, className = "" }: { label: string, value: number, onChange: (v: number) => void, step?: number, className?: string }) {
+function NumberInput({ label, value, onChange, step = 1, className = "", tooltipContent }: { label: string, value: number, onChange: (v: number) => void, step?: number, className?: string, tooltipContent?: React.ReactNode }) {
   const id = useId();
   const [inputValue, setInputValue] = useState(value.toString());
   const [isFocused, setIsFocused] = useState(false);
@@ -325,7 +385,10 @@ function NumberInput({ label, value, onChange, step = 1, className = "" }: { lab
 
   return (
     <div className={className}>
-      <label htmlFor={id} className="block text-xs text-gray-600 mb-1">{label}</label>
+      <label htmlFor={id} className="block text-xs text-gray-600 mb-1 flex items-center">
+        {label}
+        {tooltipContent && <Tooltip content={tooltipContent} />}
+      </label>
       <input
         id={id}
         type="number"
