@@ -15,6 +15,7 @@ type ResultsProps = {
 
 export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const tableContainerRef = useRef<HTMLDivElement>(null);
 
   const metrics = useMemo(() => {
     // Target Reached Age
@@ -44,9 +45,19 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
   }, [data, targetAmount]);
 
   const handleSaveImage = useCallback(() => {
-    if (ref.current === null) {
+    if (ref.current === null || tableContainerRef.current === null) {
       return;
     }
+
+    // Save original styles
+    const originalRootOverflow = ref.current.style.overflow;
+    const originalTableMaxHeight = tableContainerRef.current.style.maxHeight;
+    const originalTableOverflow = tableContainerRef.current.style.overflow;
+
+    // Expand for capture
+    ref.current.style.overflow = 'visible';
+    tableContainerRef.current.style.maxHeight = 'none';
+    tableContainerRef.current.style.overflow = 'visible';
 
     toPng(ref.current, {
         cacheBust: true,
@@ -65,6 +76,14 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
       })
       .catch((err) => {
         console.error('Failed to capture image', err);
+      })
+      .finally(() => {
+        // Restore styles
+        if (ref.current) ref.current.style.overflow = originalRootOverflow;
+        if (tableContainerRef.current) {
+          tableContainerRef.current.style.maxHeight = originalTableMaxHeight;
+          tableContainerRef.current.style.overflow = originalTableOverflow;
+        }
       });
   }, [ref]);
   const handleDownloadCSV = () => {
@@ -227,7 +246,7 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
             <Download size={16} /> CSVダウンロード
           </button>
         </div>
-        <div className="overflow-x-auto max-h-[500px]">
+        <div className="overflow-x-auto max-h-[500px]" ref={tableContainerRef}>
           <table className="min-w-full text-sm text-left text-gray-500">
             <thead className="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0 z-10">
               <tr>
