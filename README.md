@@ -1,30 +1,36 @@
-# Side FIRE Simulator (Client-side)
+# Side FIRE Simulator (Client-side) / 人生見えるくん
 
-This is a React-based client-side version of the Side FIRE Simulator.
+This is a React-based client-side Life Plan / Side FIRE Simulator.
+人生の資金計画（ライフプラン）をシミュレーションするReactアプリケーションです。
+
+## Features (主な機能)
+
+- **Client-side Logic:** All calculations run in the browser using TypeScript. (すべての計算はブラウザ上で実行されます)
+- **Detailed Input Settings:**
+    - **Inflation Rate (想定インフレ率):** Applies to Living Cost and Education Cost. **Housing Cost is excluded** (fixed nominal contract assumption).
+    - **Income Growth Rate (想定昇給率):** Applies to Main Job Monthly Income. **Bonuses are excluded** (fixed nominal assumption).
+    - **Real Value Display (実質価値表示):** Results are displayed in Present Value (Real Terms), adjusting for inflation to show true purchasing power.
+- **Dynamic Housing Plans:** Configure multiple future housing phases (e.g., Rent -> Mortgage -> Paid off).
+- **Interactive Charts:** Visualize asset progression, income/expense breakdown.
+- **Life Events:** Register one-time special income or expenses at specific ages.
+- **Target Setting:** Freely set your target asset amount.
 
 ## Prerequisites
 
 - Node.js (v18 or later recommended)
 - npm
 
-## Setup
+## Setup & Run
 
-1. Navigate to the `client` directory:
-   ```bash
-   cd client
-   ```
-2. Install dependencies:
+1. Install dependencies:
    ```bash
    npm install
    ```
 
-## Development
-
-To start the development server:
-
-```bash
-npm run dev
-```
+2. Start the development server:
+   ```bash
+   npm run dev
+   ```
 
 ## Build
 
@@ -36,9 +42,10 @@ npm run build
 
 The output will be in the `dist` directory.
 
-## Features
+## Tests
 
-- **Client-side Logic:** All calculations run in the browser using TypeScript.
-- **Dynamic Housing Plans:** Add multiple future housing phases.
-- **Interactive Charts:** Visualize asset progression.
-- **Target Setting:** Freely set your target asset amount.
+Run unit tests (Vitest):
+
+```bash
+npm test
+```
