@@ -262,7 +262,8 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
     totalPrincipal += netSavingsNominal;
 
     const balancePreInterest = assets + netSavingsNominal;
-    const investmentIncomeNominal = balancePreInterest * interestRate;
+    // Investment income is 0 if balance is negative (no interest on debt in this simplified model)
+    const investmentIncomeNominal = balancePreInterest > 0 ? balancePreInterest * interestRate : 0;
     totalInvestmentIncome += investmentIncomeNominal;
 
     assets = balancePreInterest + investmentIncomeNominal;

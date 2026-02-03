@@ -100,4 +100,37 @@ describe('calculateSimulation with Inflation and Growth (Nominal Output)', () =>
     expect(retirementYear).toBeDefined();
     expect(retirementYear?.incomeBreakdown.bonus).toBe(1000);
   });
+
+  it('should stop generating investment income when balance becomes negative', () => {
+    // Scenario: High expenses, low income, eventually debt
+    const debtInput: SimulationInput = {
+        ...baseInput,
+        currentAssets: 100, // Low initial
+        monthlyIncome: 10,  // 120/yr
+        monthlyLivingCost: 50, // 600/yr (Deficit 480/yr)
+        interestRatePct: 10.0, // High interest
+        deathAge: 35
+    };
+
+    const result = calculateSimulation(debtInput);
+
+    // Year 0: Start 100. Deficit 480. End = 100 - 480 = -380 (approx)
+    // Pre-interest balance = -380.
+    // Interest should be 0 (NOT -38).
+
+    // Check first year where it goes negative
+    const negativeYear = result.find(r => r.yearEndBalance < 0);
+    expect(negativeYear).toBeDefined();
+
+    // Ensure investment income is 0 for that year and subsequent
+    if (negativeYear) {
+        expect(negativeYear.investmentIncome).toBe(0);
+
+        // Check next year too
+        const nextYear = result.find(r => r.age === negativeYear.age + 1);
+        if (nextYear) {
+            expect(nextYear.investmentIncome).toBe(0);
+        }
+    }
+  });
 });
