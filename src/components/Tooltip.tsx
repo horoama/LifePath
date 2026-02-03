@@ -28,12 +28,11 @@ export function Tooltip({ content }: TooltipProps) {
   useLayoutEffect(() => {
     if (isVisible && iconRef.current) {
       const iconRect = iconRef.current.getBoundingClientRect();
-      const scrollY = window.scrollY;
-      const scrollX = window.scrollX;
 
       // Default: 5px below the icon
-      let top = iconRect.bottom + scrollY + 5;
-      let left = iconRect.left + scrollX;
+      // Since we use position: fixed, we use viewport coordinates (rect), not adding scroll
+      let top = iconRect.bottom + 5;
+      let left = iconRect.left;
 
       // Adjust based on tooltip size (assumed or measured)
       // Since we can't measure the tooltip before it renders in this pass easily without flickering,
