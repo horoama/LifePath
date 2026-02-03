@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Info, X } from 'lucide-react';
+import { Info } from 'lucide-react';
 
 type TooltipProps = {
   content: React.ReactNode;
@@ -8,77 +8,56 @@ type TooltipProps = {
 
 export function Tooltip({ content }: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const [coords, setCoords] = useState({ top: 0, left: 0 });
+  // We use standard React state to hold the calculated position
+  const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
   const iconRef = useRef<HTMLButtonElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
 
-  const toggleVisibility = () => {
-    if (!isVisible && iconRef.current) {
-      updatePosition();
-    }
-    setIsVisible(!isVisible);
+  // If content is empty, render nothing
+  if (!content) return null;
+
+  const handleMouseEnter = () => {
+    setIsVisible(true);
   };
 
-  const updatePosition = () => {
-    if (iconRef.current) {
-      const rect = iconRef.current.getBoundingClientRect();
-      // Position logic:
-      // Default: show below the icon, aligned left or center?
-      // Mobile check: ensure it doesn't go off screen.
+  const handleMouseLeave = () => {
+    setIsVisible(false);
+  };
 
-      // Let's position it to the bottom-left of the icon by default,
-      // but shift it if it's too close to the right edge.
-
+  // Calculate position when visibility becomes true
+  useLayoutEffect(() => {
+    if (isVisible && iconRef.current) {
+      const iconRect = iconRef.current.getBoundingClientRect();
       const scrollY = window.scrollY;
-      const scrollX = window.scrollX; // Usually 0 for this app but just in case
+      const scrollX = window.scrollX;
 
-      setCoords({
-        top: rect.bottom + scrollY + 5, // 5px gap
-        left: rect.left + scrollX
-      });
-    }
-  };
+      // Default: 5px below the icon
+      let top = iconRect.bottom + scrollY + 5;
+      let left = iconRect.left + scrollX;
 
-  // Close on resize/scroll to avoid detached tooltips
-  useEffect(() => {
-    const handleScroll = () => {
-      if (isVisible) setIsVisible(false);
-    };
-    window.addEventListener('scroll', handleScroll, { capture: true }); // Capture needed for nested scrolls
-    window.addEventListener('resize', handleScroll);
-    return () => {
-      window.removeEventListener('scroll', handleScroll, { capture: true });
-      window.removeEventListener('resize', handleScroll);
-    };
-  }, [isVisible]);
+      // Adjust based on tooltip size (assumed or measured)
+      // Since we can't measure the tooltip before it renders in this pass easily without flickering,
+      // we use the max-width logic or a "safe" measure.
+      // Or we can render it off-screen, measure, then move.
+      // A simpler robust approach for this app:
+      // The tooltip has w-64 (256px).
+      const TOOLTIP_WIDTH = 256;
+      const PADDING = 10;
+      const windowWidth = window.innerWidth;
 
-  // Click outside to close
-  useEffect(() => {
-    const handleClickOutside = (e: Event) => {
-      if (isVisible && iconRef.current && !iconRef.current.contains(e.target as Node)) {
-        // We also need to check if the click was inside the tooltip content
-        // But since the tooltip is in a portal, it's tricky.
-        // Actually, if we use a backdrop or just check the portal ref...
-        // Let's use a simpler approach: click on icon toggles. Click anywhere else closes.
-        // We will need a ref for the tooltip content if we want to allow selecting text inside it.
-        // For now, let's assume clicking anywhere outside the icon closes it (unless we click inside the tooltip).
-
-        const tooltipEl = document.getElementById('tooltip-content');
-        if (tooltipEl && tooltipEl.contains(e.target as Node)) {
-          return;
-        }
-        setIsVisible(false);
+      // Check right edge
+      if (iconRect.left + TOOLTIP_WIDTH + PADDING > windowWidth) {
+        // Shift left
+        left = windowWidth - TOOLTIP_WIDTH - PADDING;
       }
-    };
 
-    if (isVisible) {
-      document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('touchstart', handleClickOutside);
+      // Ensure it's not off-screen left
+      if (left < PADDING) {
+        left = PADDING;
+      }
+
+      setPosition({ top, left });
     }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('touchstart', handleClickOutside);
-    };
   }, [isVisible]);
 
   return (
@@ -86,50 +65,28 @@ export function Tooltip({ content }: TooltipProps) {
       <button
         ref={iconRef}
         type="button"
-        onClick={toggleVisibility}
-        className="text-gray-400 hover:text-blue-500 focus:outline-none ml-1 align-middle transition-colors"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        className="text-gray-400 hover:text-blue-500 focus:outline-none ml-1 align-middle transition-colors cursor-help"
         aria-label="Info"
       >
         <Info size={16} />
       </button>
 
-      {isVisible && createPortal(
+      {isVisible && position && createPortal(
         <div
-          id="tooltip-content"
-          className="fixed z-50 bg-gray-800 text-white text-xs p-3 rounded shadow-lg max-w-[90vw] w-64 leading-relaxed"
+          ref={tooltipRef}
+          className="fixed z-50 bg-gray-800 text-white text-xs p-3 rounded shadow-lg w-64 leading-relaxed pointer-events-none"
           style={{
-            top: coords.top,
-            left: coords.left,
-            // Adjust position if it goes off-screen right
-            // We use standard CSS translation to handle "checking" edge?
-            // Better to use JS to Clamp.
-            // Let's use simple CSS logic:
-            // If left is > 50% of screen, translate -100%?
-            // Or just Clamp logic in Render?
+            top: position.top,
+            left: position.left,
           }}
         >
-          {/*
-            Simple positioning fix:
-            If we are on the right side of the screen, shift left.
-          */}
-          <div
-            style={{
-               position: 'relative',
-               left: coords.left > window.innerWidth / 2 ? 'auto' : 0,
-               right: coords.left > window.innerWidth / 2 ? 0 : 'auto',
-               transform: coords.left > window.innerWidth / 2 ? 'translateX(-80%)' : 'none'
-               // Simple heuristic: if icon is on right half, shift tooltip left
-            }}
-          >
-             {/* Close button for explicit dismissal on mobile */}
-             <div className="flex justify-between items-start gap-2 mb-1">
-                <span className="font-bold text-blue-200">説明</span>
-                <button onClick={() => setIsVisible(false)} className="text-gray-400 hover:text-white">
-                    <X size={14} />
-                </button>
-             </div>
-             <div>{content}</div>
+          {/* Header */}
+          <div className="font-bold text-blue-200 mb-1 border-b border-gray-600 pb-1">
+            説明
           </div>
+          <div>{content}</div>
         </div>,
         document.body
       )}

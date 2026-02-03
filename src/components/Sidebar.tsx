@@ -158,6 +158,10 @@ export function Sidebar({ input, setInput, targetAmount, setTargetAmount }: Side
     ),
     eventAge: "イベントが発生する年齢です。",
     eventAmount: "イベントにかかる費用、または臨時収入の金額です。",
+    postRetirementStartAge: "この仕事（または年金受給）を開始する年齢です。",
+    postRetirementEndAge: "この仕事（または年金受給）を終了する年齢です。",
+    postRetirementIncome: "受取時点での月額収入（額面）です。インフレ率は考慮されず、入力額がそのまま加算されます。",
+    postRetirementBonus: "この仕事を辞める際に受け取る退職金（手取り）などがあれば入力します。",
   };
 
   return (
@@ -208,11 +212,11 @@ export function Sidebar({ input, setInput, targetAmount, setTargetAmount }: Side
                   </button>
                 </div>
                 <div className="grid grid-cols-2 gap-2 mb-2">
-                  <NumberInput label="開始年齢" value={job.startAge} onChange={v => updateJob(i, 'startAge', v)} />
-                  <NumberInput label="終了年齢" value={job.endAge} onChange={v => updateJob(i, 'endAge', v)} />
+                  <NumberInput label="開始年齢" value={job.startAge} onChange={v => updateJob(i, 'startAge', v)} tooltipContent={TOOLTIPS.postRetirementStartAge} />
+                  <NumberInput label="終了年齢" value={job.endAge} onChange={v => updateJob(i, 'endAge', v)} tooltipContent={TOOLTIPS.postRetirementEndAge} />
                 </div>
-                <NumberInput label="月収 (万円)" value={job.monthlyIncome} onChange={v => updateJob(i, 'monthlyIncome', v)} className="mb-2" />
-                <NumberInput label="退職金 (万円)" value={job.retirementBonus} onChange={v => updateJob(i, 'retirementBonus', v)} />
+                <NumberInput label="月収 (万円)" value={job.monthlyIncome} onChange={v => updateJob(i, 'monthlyIncome', v)} className="mb-2" tooltipContent={TOOLTIPS.postRetirementIncome} />
+                <NumberInput label="退職金 (万円)" value={job.retirementBonus} onChange={v => updateJob(i, 'retirementBonus', v)} tooltipContent={TOOLTIPS.postRetirementBonus} />
               </div>
             ))}
             <AddButton onClick={addJob} label="仕事を追加" />
