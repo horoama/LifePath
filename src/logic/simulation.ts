@@ -53,6 +53,7 @@ export type SimulationInput = {
 export type SimulationYearResult = {
   age: number;
   yearsPassed: number;
+  inflationFactor: number;
   event: string;
   monthlyHousingCost: number;
   annualIncome: number; // Total income including bonuses
@@ -99,7 +100,7 @@ const EDU_COSTS_MAP = {
   }
 };
 
-export function calculateSimulation(input: SimulationInput): SimulationYearResult[] {
+export function calculateSimulation(input: SimulationInput): { real: SimulationYearResult[], nominal: SimulationYearResult[] } {
   const {
     currentAge,
     currentAssets,
@@ -121,7 +122,8 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
   const inflationRate = inflationRatePct / 100.0;
   const incomeIncreaseRate = incomeIncreaseRatePct / 100.0;
 
-  const simulationData: SimulationYearResult[] = [];
+  const realData: SimulationYearResult[] = [];
+  const nominalData: SimulationYearResult[] = [];
 
   let assets = currentAssets;
   let totalPrincipal = currentAssets;
@@ -266,12 +268,40 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
 
     assets = balancePreInterest + investmentIncomeNominal;
 
-    // --- Convert to Real Values (Present Value) for Display ---
-    // Rule: Real Value = Nominal Value / Inflation Factor
-
-    simulationData.push({
+    // --- 1. Push Nominal Data ---
+    nominalData.push({
       age,
       yearsPassed,
+      inflationFactor,
+      event: eventNotes.join(', '),
+      monthlyHousingCost: currentHousingCostNominal,
+      annualIncome: annualIncomeNominal,
+      annualExpenses: annualExpensesNominal,
+      annualSavings: netSavingsNominal,
+      yearEndBalance: Math.floor(assets),
+      investmentIncome: Math.floor(investmentIncomeNominal),
+      totalPrincipal: Math.floor(totalPrincipal),
+      totalInvestmentIncome: Math.floor(totalInvestmentIncome),
+      incomeBreakdown: {
+        salary: mainJobIncome,
+        bonus: mainJobBonus,
+        pension: postRetirementIncome,
+        oneTime: oneTimeIncome
+      },
+      expenseBreakdown: {
+        living: basicLivingExpense,
+        housing: housingExpense,
+        education: childExpense,
+        oneTime: oneTimeExpense
+      }
+    });
+
+    // --- 2. Push Real Data (Present Value) ---
+    // Rule: Real Value = Nominal Value / Inflation Factor
+    realData.push({
+      age,
+      yearsPassed,
+      inflationFactor,
       event: eventNotes.join(', '),
       monthlyHousingCost: currentHousingCostNominal / inflationFactor, // Will decrease in real terms
       annualIncome: annualIncomeNominal / inflationFactor,
@@ -299,5 +329,5 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
     yearIndex += 1;
   }
 
-  return simulationData;
+  return { real: realData, nominal: nominalData };
 }

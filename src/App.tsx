@@ -28,7 +28,7 @@ function App() {
     oneTimeEvents: []
   });
 
-  const simulationData = useMemo(() => {
+  const simulationResult = useMemo(() => {
     return calculateSimulation(input);
   }, [input]);
 
@@ -80,9 +80,10 @@ function App() {
       {/* Results (Graph) */}
       <div className={`flex-1 ${activeTab === 'result' ? 'block' : 'hidden lg:block'}`}>
         <Results
-          data={simulationData}
+          real={simulationResult.real}
+          nominal={simulationResult.nominal}
+          input={input}
           targetAmount={targetAmount}
-          retirementAge={input.retirementAge}
         />
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useCallback } from 'react';
+import { useMemo, useRef, useCallback, useState } from 'react';
 import { toPng } from 'html-to-image';
 import { Camera } from 'lucide-react';
 import {
@@ -6,25 +6,34 @@ import {
 } from 'recharts';
 import { Download } from 'lucide-react';
 import { Tooltip as InfoTooltip } from './Tooltip';
-import type { SimulationYearResult } from '../logic/simulation';
+import type { SimulationYearResult, SimulationInput } from '../logic/simulation';
 
 type ResultsProps = {
-  data: SimulationYearResult[];
+  real: SimulationYearResult[];
+  nominal: SimulationYearResult[];
+  input: SimulationInput;
   targetAmount: number;
-  retirementAge: number;
 };
 
-export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
+export function Results({ real, nominal, input, targetAmount }: ResultsProps) {
+  const [isNominal, setIsNominal] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
+  const activeData = isNominal ? nominal : real;
+  const valueTypeLabel = isNominal ? "名目値" : "実質値";
+  const retirementAge = input.retirementAge;
+
   const metrics = useMemo(() => {
     // Target Reached Age
-    const reachedRow = data.find(row => row.yearEndBalance >= targetAmount);
+    const reachedRow = activeData.find(row => {
+        const adjustedTarget = isNominal ? targetAmount * row.inflationFactor : targetAmount;
+        return row.yearEndBalance >= adjustedTarget;
+    });
     const targetAgeText = reachedRow ? `${reachedRow.age}歳` : "到達せず";
 
     // Asset at Retirement
-    const retirementRow = data.find(row => row.age === retirementAge);
+    const retirementRow = activeData.find(row => row.age === retirementAge);
     const retirementAssetText = retirementRow
       ? `${retirementRow.yearEndBalance.toLocaleString()} 万円`
       : "データなし";
@@ -35,15 +44,15 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
       : "データなし";
 
     return { targetAgeText, retirementAssetText, retirementIncomeText };
-  }, [data, targetAmount, retirementAge]);
+  }, [activeData, targetAmount, retirementAge, isNominal]);
 
   // Prepare chart data with target line
   const chartData = useMemo(() => {
-    return data.map(d => ({
+    return activeData.map(d => ({
       ...d,
-      target: targetAmount
+      target: isNominal ? Math.floor(targetAmount * d.inflationFactor) : targetAmount
     }));
-  }, [data, targetAmount]);
+  }, [activeData, targetAmount, isNominal]);
 
   const handleSaveImage = useCallback(() => {
     if (ref.current === null || tableContainerRef.current === null) {
@@ -108,7 +117,7 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
     ];
 
     // Map data to rows
-    const rows = data.map(row => [
+    const rows = activeData.map(row => [
       row.age,
       `"${row.event || ''}"`, // Quote events to handle commas
       row.annualIncome,
@@ -146,7 +155,24 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
   return (
     <div className="flex-1 p-8 overflow-y-auto bg-gray-100" ref={ref}>
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">ライフプラン・シミュレーション結果</h1>
+        <div className="flex flex-col md:flex-row md:items-center gap-4">
+            <h1 className="text-3xl font-bold text-gray-800">ライフプラン・シミュレーション結果</h1>
+            {/* Toggle Switch */}
+             <div className="flex items-center bg-gray-200 rounded-lg p-1 w-fit">
+                <button
+                    onClick={() => setIsNominal(false)}
+                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors cursor-pointer ${!isNominal ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                    実質値
+                </button>
+                <button
+                    onClick={() => setIsNominal(true)}
+                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors cursor-pointer ${isNominal ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                    名目値
+                </button>
+            </div>
+        </div>
         <button
             onClick={handleSaveImage}
             className="no-capture flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow transition-colors cursor-pointer"
@@ -161,17 +187,17 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
         <MetricCard
           label={`目標${targetAmount}万円到達年齢`}
           value={metrics.targetAgeText}
-          tooltipContent="資産額が目標金額（インフレ調整済）を初めて上回る年齢です。"
+          tooltipContent={`資産額が目標金額（${valueTypeLabel}）を初めて上回る年齢です。`}
         />
         <MetricCard
           label={`${retirementAge}歳時点の資産額`}
           value={metrics.retirementAssetText}
-          tooltipContent="メインの退職年齢時点での総資産額（インフレ調整済）です。"
+          tooltipContent={`メインの退職年齢時点での総資産額（${valueTypeLabel}）です。`}
         />
         <MetricCard
           label={`${retirementAge}歳時点の年間不労所得`}
           value={metrics.retirementIncomeText}
-          tooltipContent="退職年齢時点で発生している不労所得（運用益など・インフレ調整済）の年間金額です。"
+          tooltipContent={`退職年齢時点で発生している不労所得（運用益など・${valueTypeLabel}）の年間金額です。`}
         />
       </div>
 
@@ -181,7 +207,7 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-xl font-semibold text-gray-700 mb-4 flex items-center gap-2">
             総資産推移
-            <InfoTooltip content="毎年の年末時点での総資産額（インフレ調整済）の推移です。" />
+            <InfoTooltip content={`毎年の年末時点での総資産額（${valueTypeLabel}）の推移です。`} />
           </h2>
           <div className="h-[400px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -203,7 +229,7 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
             <div className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-xl font-semibold text-gray-700 mb-4 flex items-center gap-2">
               年間収入内訳
-              <InfoTooltip content="年間の収入内訳（インフレ調整済）です。「運用益」は資産運用による利益を表します。" />
+              <InfoTooltip content={`年間の収入内訳（${valueTypeLabel}）です。「運用益」は資産運用による利益を表します。`} />
             </h2>
             <div className="h-[400px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -227,7 +253,7 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
             <div className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-xl font-semibold text-gray-700 mb-4 flex items-center gap-2">
               年間支出内訳
-              <InfoTooltip content="年間の支出内訳（インフレ調整済）です。" />
+              <InfoTooltip content={`年間の支出内訳（${valueTypeLabel}）です。`} />
             </h2>
             <div className="h-[400px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -273,13 +299,13 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
                 <th className="px-4 py-3 whitespace-nowrap text-right">
                   <div className="flex items-center justify-end gap-1">
                     年間収入
-                    <InfoTooltip content="給与、ボーナス、年金、一時収入の合計です（運用益は含みません）。インフレ調整後の現在価値で表示されています。" />
+                    <InfoTooltip content={`給与、ボーナス、年金、一時収入の合計です（運用益は含みません）。${valueTypeLabel}で表示されています。`} />
                   </div>
                 </th>
                 <th className="px-4 py-3 whitespace-nowrap text-right">
                   <div className="flex items-center justify-end gap-1">
                     年間支出
-                    <InfoTooltip content="基本生活費、住居費、教育費、一時支出の合計です。インフレ調整後の現在価値で表示されています。" />
+                    <InfoTooltip content={`基本生活費、住居費、教育費、一時支出の合計です。${valueTypeLabel}で表示されています。`} />
                   </div>
                 </th>
                 <th className="px-4 py-3 whitespace-nowrap text-right">
@@ -297,13 +323,13 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
                 <th className="px-4 py-3 whitespace-nowrap text-right font-bold">
                   <div className="flex items-center justify-end gap-1">
                     年末資産残高
-                    <InfoTooltip content="運用益を加えた年末時点の総資産額です（現在価値）。" />
+                    <InfoTooltip content={`運用益を加えた年末時点の総資産額です（${valueTypeLabel}）。`} />
                   </div>
                 </th>
               </tr>
             </thead>
             <tbody>
-              {data.map((row) => (
+              {activeData.map((row) => (
                 <tr key={row.age} className="bg-white border-b hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium text-gray-900">{row.age}</td>
                   <td className="px-4 py-3 max-w-xs truncate" title={row.event}>{row.event || '-'}</td>
