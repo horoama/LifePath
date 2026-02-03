@@ -79,7 +79,7 @@ export type SimulationYearResult = {
 
 export const EDUCATION_PATTERNS = ['全公立', '全私立', '大学のみ私立'] as const;
 
-const EDU_COSTS_MAP = {
+export const EDU_COSTS_MAP = {
   "全公立": {
     primary: 40,   // 7-12
     middle: 40,    // 13-15
