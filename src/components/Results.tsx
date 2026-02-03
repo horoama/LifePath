@@ -19,17 +19,17 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
   const metrics = useMemo(() => {
-    // Target Reached Age
+    // Target Reached Age (Using Nominal Balance)
     const reachedRow = data.find(row => row.yearEndBalance >= targetAmount);
     const targetAgeText = reachedRow ? `${reachedRow.age}歳` : "到達せず";
 
-    // Asset at Retirement
+    // Asset at Retirement (Nominal)
     const retirementRow = data.find(row => row.age === retirementAge);
     const retirementAssetText = retirementRow
       ? `${retirementRow.yearEndBalance.toLocaleString()} 万円`
       : "データなし";
 
-    // Income at Retirement (Post-retirement job income starts appearing, or investment income)
+    // Income at Retirement (Nominal)
     const retirementIncomeText = retirementRow
       ? `${retirementRow.investmentIncome.toLocaleString()} 万円`
       : "データなし";
@@ -87,6 +87,7 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
         }
       });
   }, [ref]);
+
   const handleDownloadCSV = () => {
     // Define headers
     const headers = [
@@ -104,7 +105,8 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
       '一時支出',
       '年間収支(貯蓄)',
       '運用益',
-      '年末資産残高'
+      '年末資産残高(名目)',
+      '年末資産残高(実質)'
     ];
 
     // Map data to rows
@@ -123,7 +125,8 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
       row.expenseBreakdown.oneTime,
       row.annualSavings,
       row.investmentIncome,
-      row.yearEndBalance
+      row.yearEndBalance,
+      row.yearEndBalanceReal
     ]);
 
     // Combine headers and rows
@@ -161,17 +164,17 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
         <MetricCard
           label={`目標${targetAmount}万円到達年齢`}
           value={metrics.targetAgeText}
-          tooltipContent="資産額が目標金額（インフレ調整済）を初めて上回る年齢です。"
+          tooltipContent="資産額が目標金額（名目値）を初めて上回る年齢です。"
         />
         <MetricCard
           label={`${retirementAge}歳時点の資産額`}
           value={metrics.retirementAssetText}
-          tooltipContent="メインの退職年齢時点での総資産額（インフレ調整済）です。"
+          tooltipContent="メインの退職年齢時点での総資産額（名目値）です。"
         />
         <MetricCard
           label={`${retirementAge}歳時点の年間不労所得`}
           value={metrics.retirementIncomeText}
-          tooltipContent="退職年齢時点で発生している不労所得（運用益など・インフレ調整済）の年間金額です。"
+          tooltipContent="退職年齢時点で発生している不労所得（運用益など・名目値）の年間金額です。"
         />
       </div>
 
@@ -181,7 +184,7 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-xl font-semibold text-gray-700 mb-4 flex items-center gap-2">
             総資産推移
-            <InfoTooltip content="毎年の年末時点での総資産額（インフレ調整済）の推移です。" />
+            <InfoTooltip content="毎年の年末時点での総資産額の推移です。「名目」は将来の金額そのもの、「実質」はインフレによる価値目減りを考慮した参考値です。" />
           </h2>
           <div className="h-[400px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -191,7 +194,8 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
                 <YAxis label={{ value: '万円', angle: -90, position: 'insideLeft' }} />
                 <Tooltip formatter={(value: any) => typeof value === 'number' ? `${value.toLocaleString()} 万円` : value} />
                 <Legend />
-                <Area type="monotone" dataKey="yearEndBalance" name="総資産" stroke="#8884d8" fill="#8884d8" />
+                <Area type="monotone" dataKey="yearEndBalance" name="総資産(名目)" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
+                <Area type="monotone" dataKey="yearEndBalanceReal" name="総資産(実質)" stroke="#82ca9d" fill="none" strokeDasharray="5 5" strokeWidth={2} />
                 <Area type="monotone" dataKey="target" name="目標額" stroke="#ff7f0e" fill="none" strokeDasharray="5 5" />
               </AreaChart>
             </ResponsiveContainer>
@@ -203,7 +207,7 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
             <div className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-xl font-semibold text-gray-700 mb-4 flex items-center gap-2">
               年間収入内訳
-              <InfoTooltip content="年間の収入内訳（インフレ調整済）です。「運用益」は資産運用による利益を表します。" />
+              <InfoTooltip content="年間の収入内訳（名目値）です。「運用益」は資産運用による利益を表します。" />
             </h2>
             <div className="h-[400px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -227,7 +231,7 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
             <div className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-xl font-semibold text-gray-700 mb-4 flex items-center gap-2">
               年間支出内訳
-              <InfoTooltip content="年間の支出内訳（インフレ調整済）です。" />
+              <InfoTooltip content="年間の支出内訳（名目値）です。インフレ率に応じて生活費や教育費が増加して表示されます。" />
             </h2>
             <div className="h-[400px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -273,13 +277,13 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
                 <th className="px-4 py-3 whitespace-nowrap text-right">
                   <div className="flex items-center justify-end gap-1">
                     年間収入
-                    <InfoTooltip content="給与、ボーナス、年金、一時収入の合計です（運用益は含みません）。インフレ調整後の現在価値で表示されています。" />
+                    <InfoTooltip content="給与、ボーナス、年金、一時収入の合計です（運用益は含みません）。名目値で表示されています。" />
                   </div>
                 </th>
                 <th className="px-4 py-3 whitespace-nowrap text-right">
                   <div className="flex items-center justify-end gap-1">
                     年間支出
-                    <InfoTooltip content="基本生活費、住居費、教育費、一時支出の合計です。インフレ調整後の現在価値で表示されています。" />
+                    <InfoTooltip content="基本生活費、住居費、教育費、一時支出の合計です。名目値で表示されています。" />
                   </div>
                 </th>
                 <th className="px-4 py-3 whitespace-nowrap text-right">
@@ -297,7 +301,7 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
                 <th className="px-4 py-3 whitespace-nowrap text-right font-bold">
                   <div className="flex items-center justify-end gap-1">
                     年末資産残高
-                    <InfoTooltip content="運用益を加えた年末時点の総資産額です（現在価値）。" />
+                    <InfoTooltip content="運用益を加えた年末時点の総資産額です（名目値）。" />
                   </div>
                 </th>
               </tr>
@@ -308,17 +312,17 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
                   <td className="px-4 py-3 font-medium text-gray-900">{row.age}</td>
                   <td className="px-4 py-3 max-w-xs truncate" title={row.event}>{row.event || '-'}</td>
 
-                  <td className="px-4 py-3 text-right" title={`給与収入: ${row.incomeBreakdown.salary}
-退職金: ${row.incomeBreakdown.bonus}
-再雇用・年金: ${row.incomeBreakdown.pension}
-一時収入: ${row.incomeBreakdown.oneTime}`}>
+                  <td className="px-4 py-3 text-right" title={`給与収入: ${row.incomeBreakdown.salary.toLocaleString()}
+退職金: ${row.incomeBreakdown.bonus.toLocaleString()}
+再雇用・年金: ${row.incomeBreakdown.pension.toLocaleString()}
+一時収入: ${row.incomeBreakdown.oneTime.toLocaleString()}`}>
                     {row.annualIncome.toLocaleString()}
                   </td>
 
-                  <td className="px-4 py-3 text-right" title={`基本生活費: ${row.expenseBreakdown.living}
-住居費: ${row.expenseBreakdown.housing}
-教育・養育費: ${row.expenseBreakdown.education}
-一時支出: ${row.expenseBreakdown.oneTime}`}>
+                  <td className="px-4 py-3 text-right" title={`基本生活費: ${row.expenseBreakdown.living.toLocaleString()}
+住居費: ${row.expenseBreakdown.housing.toLocaleString()}
+教育・養育費: ${row.expenseBreakdown.education.toLocaleString()}
+一時支出: ${row.expenseBreakdown.oneTime.toLocaleString()}`}>
                     {row.annualExpenses.toLocaleString()}
                   </td>
 
