@@ -42,3 +42,15 @@ jobs:
         with:
           files: ${{ env.ARCHIVE_NAME }}
           generate_release_notes: true
+
+      - name: Deploy to horoama.github.io
+        uses: cpina/github-action-push-to-another-repository@v1.7.2
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.DEPLOY_TOKEN }}
+        with:
+          source-directory: 'dist'
+          destination-github-username: 'horoama'
+          destination-repository-name: 'horoama.github.io'
+          target-directory: 'lifeplan'
+          user-email: 'github-actions[bot]@users.noreply.github.com'
+          target-branch: 'main'
