@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { calculateSimulation } from './simulation';
 import type { SimulationInput } from './simulation';
 
-describe('calculateSimulation with Inflation and Growth', () => {
+describe('calculateSimulation with Inflation and Growth (Nominal Output)', () => {
   const baseInput: SimulationInput = {
     currentAge: 30,
     currentAssets: 1000,
@@ -26,11 +26,11 @@ describe('calculateSimulation with Inflation and Growth', () => {
     // Annual Inc = 30 * 12 = 360
     expect(result[0].annualExpenses).toBe(180);
     expect(result[0].annualIncome).toBe(360);
+    expect(result[0].yearEndBalance).toBe(result[0].yearEndBalanceReal); // 0% inflation
   });
 
-  it('should decrease REAL housing cost when inflation > 0', () => {
+  it('should keep NOMINAL housing cost constant when inflation > 0', () => {
     // Housing cost is fixed in nominal terms (contract).
-    // So in real terms, it should decrease by inflation rate.
     const inflatedInput = { ...baseInput, inflationRatePct: 2.0 };
     const result = calculateSimulation(inflatedInput);
 
@@ -38,56 +38,51 @@ describe('calculateSimulation with Inflation and Growth', () => {
     expect(result[0].monthlyHousingCost).toBe(5);
 
     // Year 5 (Age 35)
-    // Inflation Factor = 1.02^5 ≈ 1.104
-    // Nominal Housing = 5
-    // Real Housing = 5 / 1.104 < 5
-    expect(result[5].monthlyHousingCost).toBeLessThan(5);
-    expect(result[5].monthlyHousingCost).toBeCloseTo(5 / Math.pow(1.02, 5), 4);
+    // Nominal Housing should still be 5
+    expect(result[5].monthlyHousingCost).toBe(5);
   });
 
-  it('should keep REAL living cost constant when inflation > 0', () => {
+  it('should increase NOMINAL living cost when inflation > 0', () => {
     // Living cost grows with inflation nominally.
-    // So in real terms, it should stay constant.
     const inflatedInput = { ...baseInput, inflationRatePct: 2.0 };
     const result = calculateSimulation(inflatedInput);
 
     // Year 5
     // Nominal Living = 10 * 12 * 1.02^5
-    // Real Living = Nominal / 1.02^5 = 10 * 12 = 120
-    expect(result[5].expenseBreakdown.living).toBeCloseTo(120, 0);
+    // 10 * 12 * 1.10408 = 132.49
+    expect(result[5].expenseBreakdown.living).toBeCloseTo(120 * Math.pow(1.02, 5), 4);
+    expect(result[5].expenseBreakdown.living).toBeGreaterThan(120);
   });
 
-  it('should increase REAL income when Growth > Inflation', () => {
+  it('should calculate Real Asset Value correctly', () => {
+    const inflatedInput = { ...baseInput, inflationRatePct: 2.0 };
+    const result = calculateSimulation(inflatedInput);
+
+    // Year 5
+    // Nominal Assets should be whatever they grew to
+    // Real Assets should be Nominal / 1.02^5
+    const nominal = result[5].yearEndBalance;
+    const real = result[5].yearEndBalanceReal;
+    const expectedReal = Math.floor(nominal / Math.pow(1.02, 5));
+
+    expect(real).toBe(expectedReal);
+    expect(real).toBeLessThan(nominal);
+  });
+
+  it('should increase NOMINAL income when Growth > 0', () => {
     const growthInput = {
         ...baseInput,
-        inflationRatePct: 2.0,
+        inflationRatePct: 2.0, // Inflation doesn't affect Income directly, only Growth Rate does
         incomeIncreaseRatePct: 3.0
     };
     const result = calculateSimulation(growthInput);
 
     // Year 5
     // Nominal Income = 360 * 1.03^5
-    // Real Income = (360 * 1.03^5) / 1.02^5 = 360 * (1.03/1.02)^5
-    // Should be greater than 360
-    expect(result[5].annualIncome).toBeGreaterThan(360);
+    expect(result[5].annualIncome).toBeCloseTo(360 * Math.pow(1.03, 5), 4);
   });
 
-  it('should decrease REAL income when Growth < Inflation', () => {
-    const growthInput = {
-        ...baseInput,
-        inflationRatePct: 3.0,
-        incomeIncreaseRatePct: 1.0
-    };
-    const result = calculateSimulation(growthInput);
-
-    // Year 5
-    // Nominal Income = 360 * 1.01^5
-    // Real Income = (360 * 1.01^5) / 1.03^5
-    // Should be less than 360
-    expect(result[5].annualIncome).toBeLessThan(360);
-  });
-
-  it('should NOT apply income growth to retirement bonus', () => {
+  it('should NOT apply income growth to retirement bonus (Nominal)', () => {
     // Retirement Age = 35 (5 years from start)
     const bonusInput = {
         ...baseInput,
@@ -102,21 +97,7 @@ describe('calculateSimulation with Inflation and Growth', () => {
     const retirementYear = result.find(r => r.age === 35);
 
     // Bonus should be exactly 1000 (Nominal)
-    // Income breakdown bonus should be 1000
     expect(retirementYear).toBeDefined();
     expect(retirementYear?.incomeBreakdown.bonus).toBe(1000);
-
-    // With inflation, real value should decrease
-    const inflatedBonusInput = {
-        ...bonusInput,
-        inflationRatePct: 2.0
-    };
-    const resultInf = calculateSimulation(inflatedBonusInput);
-    const retirementYearInf = resultInf.find(r => r.age === 35);
-
-    // Nominal = 1000
-    // Real = 1000 / 1.02^5
-    expect(retirementYearInf?.incomeBreakdown.bonus).toBeLessThan(1000);
-    expect(retirementYearInf?.incomeBreakdown.bonus).toBeCloseTo(1000 / Math.pow(1.02, 5), 0);
   });
 });

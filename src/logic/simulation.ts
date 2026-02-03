@@ -59,6 +59,7 @@ export type SimulationYearResult = {
   annualExpenses: number; // Total expenses including housing, edu, events
   annualSavings: number; // Net
   yearEndBalance: number;
+  yearEndBalanceReal: number; // New field for Real (Inflation-Adjusted) Value
   investmentIncome: number;
   totalPrincipal: number;
   totalInvestmentIncome: number;
@@ -266,32 +267,34 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
 
     assets = balancePreInterest + investmentIncomeNominal;
 
-    // --- Convert to Real Values (Present Value) for Display ---
-    // Rule: Real Value = Nominal Value / Inflation Factor
+    // --- Output (Nominal Values) ---
+    // We return Nominal values for the main interface, but also include
+    // Real (Inflation-Adjusted) Balance for reference.
 
     simulationData.push({
       age,
       yearsPassed,
       event: eventNotes.join(', '),
-      monthlyHousingCost: currentHousingCostNominal / inflationFactor, // Will decrease in real terms
-      annualIncome: annualIncomeNominal / inflationFactor,
-      annualExpenses: annualExpensesNominal / inflationFactor,
-      annualSavings: netSavingsNominal / inflationFactor,
-      yearEndBalance: Math.floor(assets / inflationFactor),
-      investmentIncome: Math.floor(investmentIncomeNominal / inflationFactor),
-      totalPrincipal: Math.floor(totalPrincipal / inflationFactor),
-      totalInvestmentIncome: Math.floor(totalInvestmentIncome / inflationFactor),
+      monthlyHousingCost: currentHousingCostNominal, // Nominal (Face Value)
+      annualIncome: annualIncomeNominal, // Nominal
+      annualExpenses: annualExpensesNominal, // Nominal
+      annualSavings: netSavingsNominal, // Nominal
+      yearEndBalance: Math.floor(assets), // Nominal
+      yearEndBalanceReal: Math.floor(assets / inflationFactor), // Real (Reference)
+      investmentIncome: Math.floor(investmentIncomeNominal), // Nominal
+      totalPrincipal: Math.floor(totalPrincipal), // Nominal
+      totalInvestmentIncome: Math.floor(totalInvestmentIncome), // Nominal
       incomeBreakdown: {
-        salary: mainJobIncome / inflationFactor,
-        bonus: mainJobBonus / inflationFactor,
-        pension: postRetirementIncome / inflationFactor,
-        oneTime: oneTimeIncome / inflationFactor
+        salary: mainJobIncome, // Nominal
+        bonus: mainJobBonus, // Nominal
+        pension: postRetirementIncome, // Nominal
+        oneTime: oneTimeIncome // Nominal
       },
       expenseBreakdown: {
-        living: basicLivingExpense / inflationFactor,
-        housing: housingExpense / inflationFactor,
-        education: childExpense / inflationFactor,
-        oneTime: oneTimeExpense / inflationFactor
+        living: basicLivingExpense, // Nominal
+        housing: housingExpense, // Nominal
+        education: childExpense, // Nominal
+        oneTime: oneTimeExpense // Nominal
       }
     });
 
