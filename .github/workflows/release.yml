@@ -53,4 +53,4 @@ jobs:
           destination-repository-name: 'horoama.github.io'
           target-directory: 'lifeplan'
           user-email: 'github-actions[bot]@users.noreply.github.com'
-          target-branch: 'main'
+          target-branch: 'master'
