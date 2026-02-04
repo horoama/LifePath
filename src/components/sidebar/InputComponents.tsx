@@ -1,4 +1,4 @@
-import { useState, useId } from 'react';
+import { useState, useId, useRef, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { Tooltip } from '../Tooltip';
 
@@ -6,32 +6,57 @@ export function NumberInput({ label, value, onChange, step = 1, className = "", 
   const id = useId();
   const [inputValue, setInputValue] = useState(value.toString());
   const [isFocused, setIsFocused] = useState(false);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+  }, []);
 
   if (!isFocused && inputValue !== value.toString()) {
     setInputValue(value.toString());
   }
 
-  const handleBlur = () => {
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     setIsFocused(false);
-    if (inputValue === '' || isNaN(parseFloat(inputValue))) {
+
+    // Clear any pending debounce update to avoid double update
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+      debounceTimer.current = null;
+    }
+
+    const currentVal = e.target.value;
+    if (currentVal === '' || isNaN(parseFloat(currentVal))) {
       onChange(0);
       setInputValue('0');
     } else {
-      onChange(parseFloat(inputValue));
+      onChange(parseFloat(currentVal));
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setInputValue(val);
-    if (val === '') {
-        onChange(0);
-    } else {
-        const num = parseFloat(val);
-        if (!isNaN(num)) {
-            onChange(num);
-        }
+
+    if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
     }
+
+    debounceTimer.current = setTimeout(() => {
+        if (val === '') {
+            onChange(0);
+        } else {
+            const num = parseFloat(val);
+            if (!isNaN(num)) {
+                onChange(num);
+            }
+        }
+        debounceTimer.current = null;
+    }, 500);
   };
 
   return (
