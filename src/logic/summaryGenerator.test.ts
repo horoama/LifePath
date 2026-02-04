@@ -15,9 +15,9 @@ describe('generateSimulationSummary', () => {
     retirementAge: 65,
     retirementBonus: 1000,
     postRetirementJobs: [],
-    monthlyLivingCost: 15,
+    livingCostPlans: [{ cost: 15, endAge: 'infinite' }],
     housingPlans: [
-      { cost: 10, duration: 'infinite' }
+      { cost: 10, endAge: 'infinite' }
     ],
     children: [],
     oneTimeEvents: []
@@ -132,5 +132,28 @@ describe('generateSimulationSummary', () => {
 
     // Check Real Value formatting exists
     expect(summary).toMatch(/実質: .*?万円/);
+  });
+
+  it('should list all living and housing plans', () => {
+     const multiPlanInput: SimulationInput = {
+         ...baseInput,
+         livingCostPlans: [
+             { cost: 20, endAge: 60 },
+             { cost: 15, endAge: 'infinite' }
+         ],
+         housingPlans: [
+             { cost: 10, endAge: 40 },
+             { cost: 5, endAge: 'infinite' }
+         ]
+     };
+     const summary = generateSimulationSummary(multiPlanInput, mockData, 3000);
+
+     expect(summary).toContain('基本生活費:');
+     expect(summary).toContain('月20万円 (60歳まで)');
+     expect(summary).toContain('月15万円 (永続)');
+
+     expect(summary).toContain('住居費:');
+     expect(summary).toContain('月10万円 (40歳まで)');
+     expect(summary).toContain('月5万円 (永続)');
   });
 });

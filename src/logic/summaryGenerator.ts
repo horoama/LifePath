@@ -27,18 +27,28 @@ export function generateSimulationSummary(
 
   lines.push('');
   lines.push('■ 支出・家族');
-  lines.push(`基本生活費: 月${input.monthlyLivingCost.toLocaleString()}万円`);
+
+  lines.push('基本生活費:');
+  if (input.livingCostPlans.length === 0) {
+      lines.push('  - 設定なし');
+  } else {
+      input.livingCostPlans.forEach(plan => {
+          lines.push(`  - 月${plan.cost.toLocaleString()}万円 (${formatEndAge(plan.endAge)})`);
+      });
+  }
+
   if (input.inflationRatePct > 0) {
     lines.push(`インフレ率: 年${input.inflationRatePct}%`);
   }
 
   // Housing
-  const currentHousing = input.housingPlans[0];
-  if (currentHousing) {
-     lines.push(`現在の住居費: 月${currentHousing.cost.toLocaleString()}万円 (${formatDuration(currentHousing.duration)})`);
-     if (input.housingPlans.length > 1) {
-        lines.push(`※ 以降、${input.housingPlans.length - 1}回の住居変更プランあり`);
-     }
+  lines.push('住居費:');
+  if (input.housingPlans.length === 0) {
+     lines.push('  - 設定なし');
+  } else {
+     input.housingPlans.forEach(plan => {
+         lines.push(`  - 月${plan.cost.toLocaleString()}万円 (${formatEndAge(plan.endAge)})`);
+     });
   }
 
   // Children
@@ -209,8 +219,8 @@ export function generateSimulationSummary(
   return lines.join('\n');
 }
 
-function formatDuration(duration: number | 'infinite'): string {
-    return duration === 'infinite' ? '永続' : `${duration}年間`;
+function formatEndAge(endAge: number | 'infinite'): string {
+    return endAge === 'infinite' ? '永続' : `${endAge}歳まで`;
 }
 
 // --- Helper Types & Functions for Breakdown ---
