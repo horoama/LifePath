@@ -6,17 +6,13 @@ import viteCompression from 'vite-plugin-compression'
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const isDev = mode === 'development'
-  const isStaging = mode === 'staging'
 
   // Set base path based on mode
   // Development: /
-  // Staging: /LifePath/ (for GitHub Pages on this repo)
-  // Production: /lifeplan/ (for deployment to horoama.github.io/lifeplan)
-  let base = '/lifeplan/'
+  // Staging/Production: /LifePath/
+  let base = '/LifePath/'
   if (isDev) {
     base = '/'
-  } else if (isStaging) {
-    base = '/LifePath/'
   }
 
   return {
