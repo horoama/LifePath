@@ -1,6 +1,11 @@
 export type HousingPlan = {
   cost: number;
-  duration: number | 'infinite';
+  endAge: number | 'infinite';
+};
+
+export type ExpensePlan = {
+  cost: number;
+  endAge: number | 'infinite';
 };
 
 export type PostRetirementJob = {
@@ -41,7 +46,7 @@ export type SimulationInput = {
   postRetirementJobs: PostRetirementJob[];
 
   // Expenses
-  monthlyLivingCost: number;
+  livingCostPlans: ExpensePlan[];
   housingPlans: HousingPlan[];
 
   // Family
@@ -114,7 +119,7 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
     retirementAge,
     retirementBonus,
     postRetirementJobs,
-    monthlyLivingCost,
+    livingCostPlans,
     housingPlans,
     children,
     oneTimeEvents
@@ -196,27 +201,44 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
 
     // 1. Basic Living Cost (Inflated)
     // nominal = base * inflationFactor
-    basicLivingExpense += (monthlyLivingCost * 12) * inflationFactor;
+    let currentLivingCostBase = 0;
+    let livingPlanFound = false;
+
+    for (const plan of livingCostPlans) {
+      const { endAge: planEndAge, cost } = plan;
+      if (planEndAge === 'infinite') {
+        currentLivingCostBase = cost;
+        livingPlanFound = true;
+        break;
+      }
+      if (age < planEndAge) {
+        currentLivingCostBase = cost;
+        livingPlanFound = true;
+        break;
+      }
+    }
+    if (!livingPlanFound && livingCostPlans.length > 0) {
+        currentLivingCostBase = livingCostPlans[livingCostPlans.length - 1].cost;
+    }
+
+    basicLivingExpense += (currentLivingCostBase * 12) * inflationFactor;
 
     // 2. Housing Cost (NOT Inflated - Fixed Nominal)
     let currentHousingCostBase = 0;
-    let cumulativeYears = 0;
     let planFound = false;
 
     for (const plan of housingPlans) {
-      const { duration, cost } = plan;
-      if (duration === 'infinite') {
+      const { endAge: planEndAge, cost } = plan;
+      if (planEndAge === 'infinite') {
         currentHousingCostBase = cost;
         planFound = true;
         break;
       }
-      const dur = duration as number;
-      if (yearsPassed < cumulativeYears + dur) {
+      if (age < planEndAge) {
         currentHousingCostBase = cost;
         planFound = true;
         break;
       }
-      cumulativeYears += dur;
     }
     if (!planFound && housingPlans.length > 0) {
         currentHousingCostBase = housingPlans[housingPlans.length - 1].cost;

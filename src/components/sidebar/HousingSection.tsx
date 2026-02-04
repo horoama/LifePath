@@ -14,11 +14,16 @@ export function HousingSection({ input, setInput }: Props) {
       const newPlans = [...prev.housingPlans];
       if (newPlans.length > 0) {
           const lastIndex = newPlans.length - 1;
-          if (newPlans[lastIndex].duration === 'infinite') {
-              newPlans[lastIndex] = { ...newPlans[lastIndex], duration: 10 };
+          const prevEndAge = newPlans.length > 1 && typeof newPlans[lastIndex - 1].endAge === 'number'
+            ? newPlans[lastIndex - 1].endAge as number
+            : prev.currentAge;
+
+          if (newPlans[lastIndex].endAge === 'infinite') {
+              const newEndAge = Math.max(prevEndAge, prev.currentAge) + 10;
+              newPlans[lastIndex] = { ...newPlans[lastIndex], endAge: newEndAge };
           }
       }
-      newPlans.push({ cost: 10, duration: 'infinite' });
+      newPlans.push({ cost: 10, endAge: 'infinite' });
       return { ...prev, housingPlans: newPlans };
     });
   };
@@ -28,7 +33,7 @@ export function HousingSection({ input, setInput }: Props) {
         const filteredPlans = prev.housingPlans.filter((_, i) => i !== index);
         if (filteredPlans.length > 0) {
             const lastIndex = filteredPlans.length - 1;
-            filteredPlans[lastIndex] = { ...filteredPlans[lastIndex], duration: 'infinite' };
+            filteredPlans[lastIndex] = { ...filteredPlans[lastIndex], endAge: 'infinite' };
         }
         return { ...prev, housingPlans: filteredPlans };
     });
@@ -49,6 +54,11 @@ export function HousingSection({ input, setInput }: Props) {
       <div className="space-y-4">
         {input.housingPlans.map((plan, i) => {
           const isLast = i === input.housingPlans.length - 1;
+
+          const minAge = i === 0
+            ? input.currentAge + 1
+            : (input.housingPlans[i - 1].endAge as number) + 1;
+
           return (
             <div key={i} className="bg-gray-50 p-3 rounded border border-gray-200 relative">
               <div className="flex justify-between items-center mb-2">
@@ -67,7 +77,15 @@ export function HousingSection({ input, setInput }: Props) {
                 </div>
               ) : (
                 <>
-                    <NumberInput label="期間 (年)" value={plan.duration as number} onChange={v => updateHousingPlan(i, 'duration', v)} tooltipContent={TOOLTIPS.housingDuration} />
+                    <NumberInput
+                        label="終了年齢 (歳まで)"
+                        value={plan.endAge as number}
+                        onChange={v => updateHousingPlan(i, 'endAge', Math.max(minAge, v))}
+                        tooltipContent={TOOLTIPS.housingDuration}
+                    />
+                    <p className="text-xs text-gray-400 text-right mt-1">
+                        ※ {minAge}歳 〜 {plan.endAge}歳
+                    </p>
                 </>
               )}
             </div>

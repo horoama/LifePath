@@ -30,7 +30,7 @@ export function Sidebar({ input, setInput, targetAmount, setTargetAmount }: Side
         <BasicInfoSection input={input} handleChange={handleChange} targetAmount={targetAmount} setTargetAmount={setTargetAmount} />
         <IncomeSection input={input} handleChange={handleChange} />
         <PostRetirementJobSection input={input} setInput={setInput} />
-        <ExpenseSection input={input} handleChange={handleChange} />
+        <ExpenseSection input={input} setInput={setInput} />
         <HousingSection input={input} setInput={setInput} />
         <FamilySection input={input} setInput={setInput} />
         <LifeEventSection input={input} setInput={setInput} />
