@@ -96,4 +96,41 @@ describe('generateSimulationSummary', () => {
       expect(summary).toContain('第1子 (5歳): 全公立');
       expect(summary).toContain('第2子 (2年後誕生予定): 全私立');
   });
+
+  it('should include detailed financial breakdown', () => {
+    const summary = generateSimulationSummary(baseInput, mockData, 3000);
+
+    expect(summary).toContain('【生涯収支・詳細】');
+
+    // Check Lifetime Total Section
+    expect(summary).toContain('■ 全期間合計');
+    // Total Income Calculation based on mockData:
+    // Income: 460 + 500 + 550 + 1500 + 200 + 200 = 3410
+    // Inv Income: 0 + 50 + 100 + 200 + 100 + 0 = 450
+    // Total = 3860
+    expect(summary).toContain('総収入: 3,860万円');
+    expect(summary).toContain('給与・賞与: 2,010万円'); // 460+500+550+500
+    expect(summary).toContain('退職金: 1,000万円'); // 1000 (at age 65)
+    expect(summary).toContain('年金・再雇用: 400万円'); // 200 + 200 (at 80, 90)
+    expect(summary).toContain('資産運用益: 450万円');
+
+    // Check Working Phase
+    expect(summary).toContain('■ 現役期間 (〜64歳)');
+    // Working rows: age 30, 40, 50
+    // Income: 460 + 500 + 550 = 1510
+    // Inv Income: 0 + 50 + 100 = 150
+    // Total = 1660
+    expect(summary).toContain('収入合計: 1,660万円');
+
+    // Check Retired Phase
+    expect(summary).toContain('■ 老後期間 (65歳〜)');
+    // Retired rows: 65, 80, 90
+    // Income: 1500 + 200 + 200 = 1900
+    // Inv Income: 200 + 100 + 0 = 300
+    // Total = 2200
+    expect(summary).toContain('収入合計: 2,200万円');
+
+    // Check Real Value formatting exists
+    expect(summary).toMatch(/実質: .*?万円/);
+  });
 });
