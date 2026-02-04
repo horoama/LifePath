@@ -1,20 +1,23 @@
-import { useMemo, useRef, useCallback } from 'react';
+import { useMemo, useRef, useCallback, useState } from 'react';
 import { toPng } from 'html-to-image';
-import { Camera } from 'lucide-react';
+import { Camera, FileText, Download } from 'lucide-react';
 import {
   Area, AreaChart, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
-import { Download } from 'lucide-react';
 import { Tooltip as InfoTooltip } from './Tooltip';
-import type { SimulationYearResult } from '../logic/simulation';
+import { SummaryModal } from './SummaryModal';
+import { generateSimulationSummary } from '../logic/summaryGenerator';
+import type { SimulationYearResult, SimulationInput } from '../logic/simulation';
 
 type ResultsProps = {
   data: SimulationYearResult[];
   targetAmount: number;
   retirementAge: number;
+  input: SimulationInput;
 };
 
-export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
+export function Results({ data, targetAmount, retirementAge, input }: ResultsProps) {
+  const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
@@ -44,6 +47,10 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
       target: targetAmount
     }));
   }, [data, targetAmount]);
+
+  const summaryText = useMemo(() => {
+    return generateSimulationSummary(input, data, targetAmount);
+  }, [input, data, targetAmount]);
 
   const handleSaveImage = useCallback(() => {
     if (ref.current === null || tableContainerRef.current === null) {
@@ -148,15 +155,30 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
 
   return (
     <div className="flex-1 p-8 overflow-y-auto bg-gray-100" ref={ref}>
+      <SummaryModal
+        isOpen={isSummaryModalOpen}
+        onClose={() => setIsSummaryModalOpen(false)}
+        summaryText={summaryText}
+      />
+
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-800">ライフプラン・シミュレーション結果</h1>
-        <button
-            onClick={handleSaveImage}
-            className="no-capture flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow transition-colors cursor-pointer"
-        >
-            <Camera size={20} />
-            <span>画像で保存</span>
-        </button>
+        <div className="flex gap-2">
+            <button
+                onClick={() => setIsSummaryModalOpen(true)}
+                className="no-capture flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded shadow transition-colors cursor-pointer"
+            >
+                <FileText size={20} />
+                <span>結果をまとめる</span>
+            </button>
+            <button
+                onClick={handleSaveImage}
+                className="no-capture flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow transition-colors cursor-pointer"
+            >
+                <Camera size={20} />
+                <span>画像で保存</span>
+            </button>
+        </div>
       </div>
 
       {/* Metrics */}

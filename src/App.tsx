@@ -87,6 +87,7 @@ function App() {
           data={simulationData}
           targetAmount={targetAmount}
           retirementAge={input.retirementAge}
+          input={input}
         />
       </div>
     </div>
