@@ -11,6 +11,7 @@ describe('calculateSimulation with Inflation and Growth (Nominal Output)', () =>
     incomeIncreaseRatePct: 0.0,
     deathAge: 40, // Short duration for testing
     monthlyIncome: 30,
+    annualBonus: 0,
     retirementAge: 60,
     retirementBonus: 0,
     postRetirementJobs: [],

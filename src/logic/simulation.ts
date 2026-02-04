@@ -33,6 +33,7 @@ export type SimulationInput = {
 
   // Main Job
   monthlyIncome: number;
+  annualBonus: number;
   retirementAge: number;
   retirementBonus: number;
 
@@ -109,6 +110,7 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
     incomeIncreaseRatePct = 0, // Default to 0 if undefined
     deathAge = 100,
     monthlyIncome,
+    annualBonus = 0,
     retirementAge,
     retirementBonus,
     postRetirementJobs,
@@ -153,6 +155,8 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
     if (age < retirementAge) {
       // Monthly income increases annually by growth rate
       mainJobIncome += (monthlyIncome * 12) * incomeGrowthFactor;
+      // Annual bonus (fixed nominal as per requirements)
+      mainJobIncome += annualBonus;
     }
     if (age === retirementAge) {
       // Retirement bonus is fixed nominal (not affected by income growth rate per user request)

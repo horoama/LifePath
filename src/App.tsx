@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Results } from './components/Results';
+import { WelcomeModal } from './components/WelcomeModal';
 import { calculateSimulation } from './logic/simulation';
 import type { SimulationInput } from './logic/simulation';
 import { Settings, BarChart3 } from 'lucide-react';
@@ -17,6 +18,7 @@ function App() {
     incomeIncreaseRatePct: 0.0,
     deathAge: 90,
     monthlyIncome: 30,
+    annualBonus: 0,
     retirementAge: 65,
     retirementBonus: 1000,
     postRetirementJobs: [],
@@ -34,12 +36,14 @@ function App() {
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100 font-sans">
+      <WelcomeModal />
+
       {/* Mobile Sticky Header Container */}
       <div className="lg:hidden sticky top-0 z-40 bg-white shadow-md">
         {/* Mobile Branding Header */}
-        <div className="flex items-center gap-2 p-4 border-b border-gray-100">
-          <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="Logo" className="w-8 h-8" />
-          <h1 className="text-lg font-bold text-gray-800">人生見えるくん</h1>
+        <div className="flex items-center gap-2 p-4 bg-brand text-white shadow-sm">
+          <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="Logo" className="w-8 h-8 bg-white rounded-full p-1" />
+          <h1 className="text-lg font-bold">人生見えるくん</h1>
         </div>
 
         {/* Mobile Toggle Buttons */}
@@ -48,7 +52,7 @@ function App() {
             onClick={() => setActiveTab('input')}
             className={`flex-1 py-3 flex items-center justify-center gap-2 font-bold text-sm border-b-2 transition-colors ${
               activeTab === 'input'
-                ? 'border-blue-500 text-blue-600 bg-blue-50'
+                ? 'border-brand text-brand bg-blue-50'
                 : 'border-transparent text-gray-500 hover:bg-gray-50'
             }`}
           >
@@ -58,7 +62,7 @@ function App() {
             onClick={() => setActiveTab('result')}
             className={`flex-1 py-3 flex items-center justify-center gap-2 font-bold text-sm border-b-2 transition-colors ${
               activeTab === 'result'
-                ? 'border-blue-500 text-blue-600 bg-blue-50'
+                ? 'border-brand text-brand bg-blue-50'
                 : 'border-transparent text-gray-500 hover:bg-gray-50'
             }`}
           >
