@@ -1,4 +1,4 @@
-import { useState, useEffect, useId } from 'react';
+import { useState, useId } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import type { SimulationInput, HousingPlan, PostRetirementJob, Child, OneTimeEvent } from '../logic/simulation';
 import { EDUCATION_PATTERNS, EDU_COSTS_MAP } from '../logic/simulation';
@@ -169,7 +169,7 @@ export function Sidebar({ input, setInput, targetAmount, setTargetAmount }: Side
   return (
     <div className="w-full lg:w-96 bg-white p-6 shadow-lg overflow-y-auto h-screen sticky top-0">
       <h2 className="hidden lg:flex text-xl font-bold mb-6 text-gray-800 items-center gap-2">
-        <img src="/logo.svg" alt="Logo" className="w-12 h-12" />
+        <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="Logo" className="w-12 h-12" />
         人生見えるくん
       </h2>
 
@@ -372,11 +372,9 @@ function NumberInput({ label, value, onChange, step = 1, className = "", tooltip
   const [inputValue, setInputValue] = useState(value.toString());
   const [isFocused, setIsFocused] = useState(false);
 
-  useEffect(() => {
-    if (!isFocused) {
-      setInputValue(value.toString());
-    }
-  }, [value, isFocused]);
+  if (!isFocused && inputValue !== value.toString()) {
+    setInputValue(value.toString());
+  }
 
   const handleBlur = () => {
     setIsFocused(false);

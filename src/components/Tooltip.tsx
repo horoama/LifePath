@@ -13,9 +13,6 @@ export function Tooltip({ content }: TooltipProps) {
   const iconRef = useRef<HTMLButtonElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
-  // If content is empty, render nothing
-  if (!content) return null;
-
   const handleMouseEnter = () => {
     setIsVisible(true);
   };
@@ -58,6 +55,9 @@ export function Tooltip({ content }: TooltipProps) {
       setPosition({ top, left });
     }
   }, [isVisible]);
+
+  // If content is empty, render nothing
+  if (!content) return null;
 
   return (
     <>
