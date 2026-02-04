@@ -49,3 +49,32 @@ Run unit tests (Vitest):
 ```bash
 npm test
 ```
+
+## Architecture & Tech Stack
+
+This project is a modern React application built with:
+
+- **Framework:** React 19
+- **Build Tool:** Vite
+- **Styling:** Tailwind CSS v4 (configured via `src/index.css` with `@theme`)
+- **Charts:** Recharts
+- **Icons:** Lucide React
+- **Testing:** Vitest
+
+### Directory Structure
+
+- `src/`
+  - `components/` - React components
+    - `sidebar/` - Sub-components for the input sidebar (refactored for modularity)
+    - `Results.tsx` - Chart and table visualization
+    - `WelcomeModal.tsx` - First-time user introduction
+  - `logic/` - Core simulation logic (`simulation.ts`) and types
+  - `App.tsx` - Main application entry point
+  - `index.css` - Global styles and theme variables
+
+## Deployment
+
+The application is deployed to GitHub Pages via GitHub Actions.
+
+- **Staging:** Pushes to `main` trigger a staging build deployed to the repository root (or `/LifePath/`).
+- **Production:** Tags push (release) triggers a production build deployed to the `/lifeplan/` subdirectory of the `horoama.github.io` repository.
