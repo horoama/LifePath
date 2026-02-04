@@ -13,9 +13,6 @@ export function Tooltip({ content }: TooltipProps) {
   const iconRef = useRef<HTMLButtonElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
-  // If content is empty, render nothing
-  if (!content) return null;
-
   const handleMouseEnter = () => {
     setIsVisible(true);
   };
@@ -32,7 +29,7 @@ export function Tooltip({ content }: TooltipProps) {
       const scrollX = window.scrollX;
 
       // Default: 5px below the icon
-      let top = iconRect.bottom + scrollY + 5;
+      const top = iconRect.bottom + scrollY + 5;
       let left = iconRect.left + scrollX;
 
       // Adjust based on tooltip size (assumed or measured)
@@ -59,6 +56,9 @@ export function Tooltip({ content }: TooltipProps) {
       setPosition({ top, left });
     }
   }, [isVisible]);
+
+  // If content is empty, render nothing
+  if (!content) return null;
 
   return (
     <>

@@ -192,6 +192,7 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="age" label={{ value: '年齢', position: 'insideBottomRight', offset: -5 }} unit="歳" />
                 <YAxis label={{ value: '万円', angle: -90, position: 'insideLeft' }} />
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 <Tooltip formatter={(value: any) => typeof value === 'number' ? `${value.toLocaleString()} 万円` : value} />
                 <Legend />
                 <Area type="monotone" dataKey="yearEndBalance" name="総資産(名目)" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
@@ -215,6 +216,7 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="age" label={{ value: '年齢', position: 'insideBottomRight', offset: -5 }} unit="歳" />
                     <YAxis label={{ value: '万円', angle: -90, position: 'insideLeft' }} />
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                     <Tooltip formatter={(value: any) => typeof value === 'number' ? `${value.toLocaleString()} 万円` : value} />
                     <Legend />
                     <Bar dataKey="incomeBreakdown.salary" name="給与収入" stackId="a" fill="#3b82f6" />
@@ -239,6 +241,7 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="age" label={{ value: '年齢', position: 'insideBottomRight', offset: -5 }} unit="歳" />
                     <YAxis label={{ value: '万円', angle: -90, position: 'insideLeft' }} />
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                     <Tooltip formatter={(value: any) => typeof value === 'number' ? `${value.toLocaleString()} 万円` : value} />
                     <Legend />
                     <Bar dataKey="expenseBreakdown.living" name="基本生活費" stackId="a" fill="#f97316" />

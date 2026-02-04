@@ -38,7 +38,7 @@ function App() {
       <div className="lg:hidden sticky top-0 z-40 bg-white shadow-md">
         {/* Mobile Branding Header */}
         <div className="flex items-center gap-2 p-4 border-b border-gray-100">
-          <img src="/logo.svg" alt="Logo" className="w-8 h-8" />
+          <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="Logo" className="w-8 h-8" />
           <h1 className="text-lg font-bold text-gray-800">人生見えるくん</h1>
         </div>
 
