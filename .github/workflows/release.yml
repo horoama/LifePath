@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - '*'
+  workflow_dispatch:
 
 jobs:
   build-and-release:
@@ -28,6 +29,7 @@ jobs:
         run: npm run build
 
       - name: Archive production artifacts
+        if: startsWith(github.ref, 'refs/tags/')
         run: |
           REPO_NAME="${{ github.event.repository.name }}"
           TAG_NAME="${{ github.ref_name }}"
@@ -38,6 +40,7 @@ jobs:
           zip -r "${ARCHIVE_NAME}" dist/
 
       - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: ${{ env.ARCHIVE_NAME }}
