@@ -1,7 +1,7 @@
 import { useState, useId } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import type { SimulationInput, HousingPlan, PostRetirementJob, Child, OneTimeEvent } from '../logic/simulation';
-import { EDUCATION_PATTERNS } from '../logic/simulation';
+import { EDUCATION_PATTERNS, EDU_COSTS_MAP } from '../logic/simulation';
 import { Tooltip } from './Tooltip';
 
 type SidebarProps = {
@@ -100,22 +100,22 @@ export function Sidebar({ input, setInput, targetAmount, setTargetAmount }: Side
 
   // Tooltip Content Constants
   const TOOLTIPS = {
-    currentAge: "シミュレーションを開始する現在の年齢です。",
-    deathAge: "シミュレーションを終了する年齢です。この年齢まで資産が持つかを計算します。",
-    currentAssets: "現在保有している金融資産の総額（現金、預金、株式、投資信託など）を入力してください。",
-    interestRate: "保有資産全体の想定リターン（年利）です。インフレ率を含まない名目利回りを設定してください。",
-    inflationRate: "生活費や教育費の毎年の上昇率です。シミュレーション結果は原則として名目値（将来価値）で表示されますが、総資産についてはインフレ調整後の価値も確認できます。",
-    targetAmount: "老後資金として確保したい目標金額です。グラフ上に目標ラインとして表示されます。",
-    monthlyIncome: "現在の手取り月収（ボーナスを除く）です。",
-    incomeIncreaseRate: "給与の毎年の上昇率（昇給率）です。将来の収入増を見込む場合に設定します。",
-    retirementAge: "メインの仕事を退職する年齢です。",
-    retirementBonus: "退職時に受け取る退職金（手取り額）です。",
-    postRetirementJob: "定年退職後の再雇用やアルバイト、または公的年金などの収入を設定します。",
-    monthlyLivingCost: "住居費と教育費を除いた、毎月の基本的な生活費です。インフレ率に応じて毎年上昇（名目額が増加）します。",
-    housingCost: "家賃や住宅ローン返済額など、住居にかかる月額費用です。インフレ率の影響を受けません（固定費扱い）。",
-    housingDuration: "その住居費が続く期間（年数）です。",
-    childBirth: "現在から何年後に子供が生まれるか（または生まれたか）を設定します。過去の場合はマイナス値を入力可能です。",
-    childCareCost: "子供1人あたりの毎月の養育費（食費・被服費・医療費など）です。22歳まで発生し、インフレ率の影響を受けます。",
+    currentAge: "シミュレーションを開始する現在の年齢です。ここを起点に将来の収支を計算します。",
+    deathAge: "シミュレーションを終了する年齢です。デフォルトは100歳ですが、ご自身の想定に合わせて調整してください。",
+    currentAssets: "現在保有している金融資産の総額（現金、預金、株式、投資信託など）を入力してください。不動産などの流動性の低い資産は含めないことを推奨します。",
+    interestRate: "保有資産全体の想定リターン（年利）です。リスク資産と安全資産の割合を考慮して設定してください（例: 株式中心なら3-5%、預金中心なら0.01-0.1%など）。インフレ率を含まない名目利回りを設定してください。",
+    inflationRate: "生活費や教育費の毎年の上昇率です。将来の購買力を考慮するために設定します（例: 日本政府の目標は2%）。シミュレーション結果は原則として名目値（将来価値）で表示されますが、総資産についてはインフレ調整後の価値も確認できます。",
+    targetAmount: "老後資金として確保したい目標金額です。グラフ上に目標ラインとして表示され、達成度を確認できます。",
+    monthlyIncome: "現在の手取り月収（ボーナスを除く）です。将来の昇給率は別途設定できます。",
+    incomeIncreaseRate: "給与の毎年の上昇率（昇給率）です。0%の場合は現在の給与が続くと仮定します。将来の収入増を見込む場合に設定します。",
+    retirementAge: "メインの仕事を退職する年齢です。この年齢以降はメインの給与収入がなくなります。",
+    retirementBonus: "退職時に受け取る退職金（手取り額）です。ない場合は0を入力してください。",
+    postRetirementJob: "定年退職後の再雇用、アルバイト、または公的年金などの収入源を設定します。複数の収入源を追加可能です。",
+    monthlyLivingCost: "住居費と教育費を除いた、毎月の基本的な生活費（食費、光熱費、通信費、被服費、趣味など）です。この金額はインフレ率に応じて毎年増加（名目額が増加）します。",
+    housingCost: "家賃や住宅ローン返済額など、住居にかかる月額費用です。固定金利や賃貸契約を想定し、インフレ率の影響を受けない設定としています（固定費扱い）。",
+    housingDuration: "その住居費が続く期間（年数）です。住宅ローンの残期間や、次の更新までの期間などを入力します。",
+    childBirth: "現在から何年後に子供が生まれるか（または生まれたか）を設定します。過去（既にお子さんがいる場合）はマイナス値を入力してください（例: 5歳のお子さんがいる場合は -5）。",
+    childCareCost: "子供1人あたりの毎月の養育費（食費・被服費・医療費・お小遣いなど）です。学費とは別に発生する費用です。インフレ率の影響を受けます。",
     eduPattern: (
       <div className="space-y-2">
         <p>進路ごとの年間教育費目安（学校納付金＋学校外活動費）</p>
@@ -156,12 +156,14 @@ export function Sidebar({ input, setInput, targetAmount, setTargetAmount }: Side
         <p className="text-[10px] text-gray-300">※単位: 万円/年。これとは別に上記の「養育費」がかかります。</p>
       </div>
     ),
-    eventAge: "イベントが発生する年齢です。",
-    eventAmount: "イベントにかかる費用、または臨時収入の金額です。",
-    postRetirementStartAge: "この仕事（または年金受給）を開始する年齢です。",
-    postRetirementEndAge: "この仕事（または年金受給）を終了する年齢です。",
-    postRetirementIncome: "受取時点での月額収入（額面）です。インフレ率は考慮されず、入力額がそのまま加算されます。",
-    postRetirementBonus: "この仕事を辞める際に受け取る退職金（手取り）などがあれば入力します。",
+    eventName: "イベントの内容を識別するための名前を入力してください（例: 車購入、リフォーム、遺産相続など）。",
+    eventAge: "イベントが発生する年齢です。現在の年齢より未来の年齢を設定してください。",
+    eventAmount: "イベントにかかる費用（支出）、または臨時収入の金額です。",
+    eventType: "このイベントが支出（お金が出ていく）か、収入（お金が入ってくる）かを選択してください。",
+    postRetirementStartAge: "この収入（仕事や年金）が始まる年齢です。",
+    postRetirementEndAge: "この収入（仕事や年金）が終わる年齢です。年金の場合は想定寿命と同じか、それ以上の年齢を設定してください。",
+    postRetirementIncome: "受取時点での月額収入（額面または手取り）です。年金の場合は受給予定額を入力します。インフレ率は考慮されず、入力額がそのまま加算されます。",
+    postRetirementBonus: "この仕事を辞める際に受け取る一時金があれば入力します。なければ0で構いません。",
   };
 
   return (
@@ -288,9 +290,14 @@ export function Sidebar({ input, setInput, targetAmount, setTargetAmount }: Side
                     onChange={(e) => updateChild(i, 'educationPattern', e.target.value as Child['educationPattern'])}
                     className="w-full p-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   >
-                    {EDUCATION_PATTERNS.map(p => (
-                      <option key={p} value={p}>{p}</option>
-                    ))}
+                    {EDUCATION_PATTERNS.map(p => {
+                      const costs = EDU_COSTS_MAP[p];
+                      const total = (costs.primary * 6) + (costs.middle * 3) + (costs.high * 3) + (costs.uni * 4);
+                      const label = `${p} (小${costs.primary}/中${costs.middle}/高${costs.high}/大${costs.uni} 総額${total}万)`;
+                      return (
+                        <option key={p} value={p}>{label}</option>
+                      );
+                    })}
                   </select>
                 </div>
               </div>
@@ -312,7 +319,10 @@ export function Sidebar({ input, setInput, targetAmount, setTargetAmount }: Side
                   </button>
                 </div>
                 <div className="mb-2">
-                    <label className="block text-xs text-gray-600 mb-1">イベント名</label>
+                    <label className="block text-xs text-gray-600 mb-1 flex items-center">
+                      イベント名
+                      <Tooltip content={TOOLTIPS.eventName} />
+                    </label>
                     <input
                         type="text"
                         value={evt.name}
@@ -325,6 +335,10 @@ export function Sidebar({ input, setInput, targetAmount, setTargetAmount }: Side
                     <NumberInput label="金額 (万円)" value={evt.amount} onChange={v => updateEvent(i, 'amount', v)} tooltipContent={TOOLTIPS.eventAmount} />
                 </div>
                 <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-600">タイプ</span>
+                        <Tooltip content={TOOLTIPS.eventType} />
+                    </div>
                     <label className="flex items-center gap-2 text-sm text-gray-600">
                         <input
                             type="radio"
