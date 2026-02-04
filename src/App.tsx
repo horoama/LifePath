@@ -22,7 +22,9 @@ function App() {
     retirementAge: 65,
     retirementBonus: 1000,
     postRetirementJobs: [],
-    monthlyLivingCost: 15,
+    livingCostPlans: [
+      { cost: 15, duration: 'infinite' }
+    ],
     housingPlans: [
       { cost: 10, duration: 'infinite' }
     ],

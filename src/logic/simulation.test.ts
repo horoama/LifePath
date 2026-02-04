@@ -15,7 +15,7 @@ describe('calculateSimulation with Inflation and Growth (Nominal Output)', () =>
     retirementAge: 60,
     retirementBonus: 0,
     postRetirementJobs: [],
-    monthlyLivingCost: 10,
+    livingCostPlans: [{ cost: 10, duration: 'infinite' }],
     housingPlans: [{ cost: 5, duration: 'infinite' }],
     children: [],
     oneTimeEvents: []
@@ -108,7 +108,7 @@ describe('calculateSimulation with Inflation and Growth (Nominal Output)', () =>
         ...baseInput,
         currentAssets: 100, // Low initial
         monthlyIncome: 10,  // 120/yr
-        monthlyLivingCost: 50, // 600/yr (Deficit 480/yr)
+        livingCostPlans: [{ cost: 50, duration: 'infinite' }], // 600/yr (Deficit 480/yr)
         interestRatePct: 10.0, // High interest
         deathAge: 35
     };
@@ -133,5 +133,49 @@ describe('calculateSimulation with Inflation and Growth (Nominal Output)', () =>
             expect(nextYear.investmentIncome).toBe(0);
         }
     }
+  });
+
+  it('should switch living cost plans at correct time', () => {
+    const multiPlanInput: SimulationInput = {
+      ...baseInput,
+      deathAge: 40,
+      livingCostPlans: [
+        { cost: 10, duration: 2 }, // Age 30, 31
+        { cost: 20, duration: 'infinite' } // Age 32+
+      ],
+      inflationRatePct: 0.0 // Keep 0 to verify base switching logic first
+    };
+    const result = calculateSimulation(multiPlanInput);
+
+    // Age 30 (Year 0)
+    expect(result[0].expenseBreakdown.living).toBe(10 * 12);
+    // Age 31 (Year 1)
+    expect(result[1].expenseBreakdown.living).toBe(10 * 12);
+    // Age 32 (Year 2)
+    expect(result[2].expenseBreakdown.living).toBe(20 * 12);
+    // Age 33 (Year 3)
+    expect(result[3].expenseBreakdown.living).toBe(20 * 12);
+  });
+
+  it('should apply inflation to switched living cost plans', () => {
+    const multiPlanInput: SimulationInput = {
+      ...baseInput,
+      deathAge: 40,
+      livingCostPlans: [
+        { cost: 10, duration: 2 }, // Age 30, 31
+        { cost: 20, duration: 'infinite' } // Age 32+
+      ],
+      inflationRatePct: 10.0 // 10% easy math
+    };
+    const result = calculateSimulation(multiPlanInput);
+
+    // Age 30 (Year 0): 10 * 12 * 1.0^0 = 120
+    expect(result[0].expenseBreakdown.living).toBeCloseTo(120, 2);
+
+    // Age 31 (Year 1): 10 * 12 * 1.1^1 = 132
+    expect(result[1].expenseBreakdown.living).toBeCloseTo(132, 2);
+
+    // Age 32 (Year 2): 20 * 12 * 1.1^2 = 240 * 1.21 = 290.4
+    expect(result[2].expenseBreakdown.living).toBeCloseTo(290.4, 2);
   });
 });

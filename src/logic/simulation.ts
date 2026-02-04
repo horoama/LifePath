@@ -3,6 +3,11 @@ export type HousingPlan = {
   duration: number | 'infinite';
 };
 
+export type ExpensePlan = {
+  cost: number;
+  duration: number | 'infinite';
+};
+
 export type PostRetirementJob = {
   startAge: number;
   endAge: number;
@@ -41,7 +46,7 @@ export type SimulationInput = {
   postRetirementJobs: PostRetirementJob[];
 
   // Expenses
-  monthlyLivingCost: number;
+  livingCostPlans: ExpensePlan[];
   housingPlans: HousingPlan[];
 
   // Family
@@ -114,7 +119,7 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
     retirementAge,
     retirementBonus,
     postRetirementJobs,
-    monthlyLivingCost,
+    livingCostPlans,
     housingPlans,
     children,
     oneTimeEvents
@@ -196,7 +201,30 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
 
     // 1. Basic Living Cost (Inflated)
     // nominal = base * inflationFactor
-    basicLivingExpense += (monthlyLivingCost * 12) * inflationFactor;
+    let currentLivingCostBase = 0;
+    let livingCumulativeYears = 0;
+    let livingPlanFound = false;
+
+    for (const plan of livingCostPlans) {
+      const { duration, cost } = plan;
+      if (duration === 'infinite') {
+        currentLivingCostBase = cost;
+        livingPlanFound = true;
+        break;
+      }
+      const dur = duration as number;
+      if (yearsPassed < livingCumulativeYears + dur) {
+        currentLivingCostBase = cost;
+        livingPlanFound = true;
+        break;
+      }
+      livingCumulativeYears += dur;
+    }
+    if (!livingPlanFound && livingCostPlans.length > 0) {
+        currentLivingCostBase = livingCostPlans[livingCostPlans.length - 1].cost;
+    }
+
+    basicLivingExpense += (currentLivingCostBase * 12) * inflationFactor;
 
     // 2. Housing Cost (NOT Inflated - Fixed Nominal)
     let currentHousingCostBase = 0;
