@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Results } from './components/Results';
+import { WelcomeModal } from './components/WelcomeModal';
 import { calculateSimulation } from './logic/simulation';
 import type { SimulationInput } from './logic/simulation';
 import { Settings, BarChart3 } from 'lucide-react';
@@ -34,6 +35,8 @@ function App() {
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100 font-sans">
+      <WelcomeModal />
+
       {/* Mobile Sticky Header Container */}
       <div className="lg:hidden sticky top-0 z-40 bg-white shadow-md">
         {/* Mobile Branding Header */}
@@ -46,9 +49,9 @@ function App() {
         <div className="flex">
           <button
             onClick={() => setActiveTab('input')}
-            className={`flex-1 py-3 flex items-center justify-center gap-2 font-bold text-sm border-b-2 transition-colors ${
+            className={`flex-1 py-3 flex items-center justify-center gap-2 font-bold text-sm border-b-2 transition-colors cursor-pointer ${
               activeTab === 'input'
-                ? 'border-blue-500 text-blue-600 bg-blue-50'
+                ? 'border-brand-500 text-brand-600 bg-brand-50'
                 : 'border-transparent text-gray-500 hover:bg-gray-50'
             }`}
           >
@@ -56,9 +59,9 @@ function App() {
           </button>
           <button
             onClick={() => setActiveTab('result')}
-            className={`flex-1 py-3 flex items-center justify-center gap-2 font-bold text-sm border-b-2 transition-colors ${
+            className={`flex-1 py-3 flex items-center justify-center gap-2 font-bold text-sm border-b-2 transition-colors cursor-pointer ${
               activeTab === 'result'
-                ? 'border-blue-500 text-blue-600 bg-blue-50'
+                ? 'border-brand-500 text-brand-600 bg-brand-50'
                 : 'border-transparent text-gray-500 hover:bg-gray-50'
             }`}
           >

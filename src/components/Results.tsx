@@ -14,6 +14,24 @@ type ResultsProps = {
   retirementAge: number;
 };
 
+// Brand-aligned chart colors
+const COLORS = {
+  assetNominal: "#2563eb", // brand-600
+  assetReal: "#10b981",    // emerald-500
+  target: "#f59e0b",       // accent-500
+
+  incomeSalary: "#2563eb", // brand-600
+  incomeBonus: "#60a5fa",  // brand-400
+  incomePension: "#93c5fd",// brand-300
+  incomeOneTime: "#22c55e",// green-500
+  incomeInvest: "#f59e0b", // accent-500
+
+  expenseLiving: "#f97316", // orange-500
+  expenseHousing: "#ef4444", // red-500
+  expenseEducation: "#ec4899", // pink-500
+  expenseOneTime: "#eab308", // yellow-500
+};
+
 export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
   const ref = useRef<HTMLDivElement>(null);
   const tableContainerRef = useRef<HTMLDivElement>(null);
@@ -147,12 +165,12 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
   };
 
   return (
-    <div className="flex-1 p-8 overflow-y-auto bg-gray-100" ref={ref}>
+    <div className="flex-1 p-8 overflow-y-auto bg-gray-50" ref={ref}>
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-800">ライフプラン・シミュレーション結果</h1>
         <button
             onClick={handleSaveImage}
-            className="no-capture flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow transition-colors cursor-pointer"
+            className="no-capture flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white font-bold py-2 px-4 rounded shadow transition-colors cursor-pointer"
         >
             <Camera size={20} />
             <span>画像で保存</span>
@@ -195,9 +213,9 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 <Tooltip formatter={(value: any) => typeof value === 'number' ? `${value.toLocaleString()} 万円` : value} />
                 <Legend />
-                <Area type="monotone" dataKey="yearEndBalance" name="総資産(名目)" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
-                <Area type="monotone" dataKey="yearEndBalanceReal" name="総資産(実質)" stroke="#82ca9d" fill="none" strokeDasharray="5 5" strokeWidth={2} />
-                <Area type="monotone" dataKey="target" name="目標額" stroke="#ff7f0e" fill="none" strokeDasharray="5 5" />
+                <Area type="monotone" dataKey="yearEndBalance" name="総資産(名目)" stroke={COLORS.assetNominal} fill={COLORS.assetNominal} fillOpacity={0.6} />
+                <Area type="monotone" dataKey="yearEndBalanceReal" name="総資産(実質)" stroke={COLORS.assetReal} fill="none" strokeDasharray="5 5" strokeWidth={2} />
+                <Area type="monotone" dataKey="target" name="目標額" stroke={COLORS.target} fill="none" strokeDasharray="5 5" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -219,11 +237,11 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
                     {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                     <Tooltip formatter={(value: any) => typeof value === 'number' ? `${value.toLocaleString()} 万円` : value} />
                     <Legend />
-                    <Bar dataKey="incomeBreakdown.salary" name="給与収入" stackId="a" fill="#3b82f6" />
-                    <Bar dataKey="incomeBreakdown.bonus" name="退職金" stackId="a" fill="#0ea5e9" />
-                    <Bar dataKey="incomeBreakdown.pension" name="再雇用・年金" stackId="a" fill="#8b5cf6" />
-                    <Bar dataKey="incomeBreakdown.oneTime" name="一時収入" stackId="a" fill="#22c55e" />
-                    <Bar dataKey="investmentIncome" name="運用益" stackId="a" fill="#f59e0b" />
+                    <Bar dataKey="incomeBreakdown.salary" name="給与収入" stackId="a" fill={COLORS.incomeSalary} />
+                    <Bar dataKey="incomeBreakdown.bonus" name="退職金" stackId="a" fill={COLORS.incomeBonus} />
+                    <Bar dataKey="incomeBreakdown.pension" name="再雇用・年金" stackId="a" fill={COLORS.incomePension} />
+                    <Bar dataKey="incomeBreakdown.oneTime" name="一時収入" stackId="a" fill={COLORS.incomeOneTime} />
+                    <Bar dataKey="investmentIncome" name="運用益" stackId="a" fill={COLORS.incomeInvest} />
                 </BarChart>
                 </ResponsiveContainer>
             </div>
@@ -244,10 +262,10 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
                     {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                     <Tooltip formatter={(value: any) => typeof value === 'number' ? `${value.toLocaleString()} 万円` : value} />
                     <Legend />
-                    <Bar dataKey="expenseBreakdown.living" name="基本生活費" stackId="a" fill="#f97316" />
-                    <Bar dataKey="expenseBreakdown.housing" name="住居費" stackId="a" fill="#ef4444" />
-                    <Bar dataKey="expenseBreakdown.education" name="教育・養育費" stackId="a" fill="#ec4899" />
-                    <Bar dataKey="expenseBreakdown.oneTime" name="一時支出" stackId="a" fill="#eab308" />
+                    <Bar dataKey="expenseBreakdown.living" name="基本生活費" stackId="a" fill={COLORS.expenseLiving} />
+                    <Bar dataKey="expenseBreakdown.housing" name="住居費" stackId="a" fill={COLORS.expenseHousing} />
+                    <Bar dataKey="expenseBreakdown.education" name="教育・養育費" stackId="a" fill={COLORS.expenseEducation} />
+                    <Bar dataKey="expenseBreakdown.oneTime" name="一時支出" stackId="a" fill={COLORS.expenseOneTime} />
                 </BarChart>
                 </ResponsiveContainer>
             </div>
@@ -261,7 +279,7 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
           <h2 className="text-xl font-semibold text-gray-700">年次収支データ</h2>
           <button
             onClick={handleDownloadCSV}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-sm"
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-sm cursor-pointer"
           >
             <Download size={16} /> CSVダウンロード
           </button>
@@ -329,7 +347,7 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
                     {row.annualExpenses.toLocaleString()}
                   </td>
 
-                  <td className={`px-4 py-3 text-right ${row.annualSavings >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                  <td className={`px-4 py-3 text-right ${row.annualSavings >= 0 ? 'text-brand-600' : 'text-red-600'}`}>
                     {row.annualSavings.toLocaleString()}
                   </td>
                   <td className="px-4 py-3 text-right text-green-600" title="運用益">+{row.investmentIncome.toLocaleString()}</td>
@@ -346,7 +364,7 @@ export function Results({ data, targetAmount, retirementAge }: ResultsProps) {
 
 function MetricCard({ label, value, tooltipContent }: { label: string, value: string, tooltipContent?: React.ReactNode }) {
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500">
+    <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-brand-500 hover:shadow-lg transition-shadow">
       <div className="text-sm text-gray-500 mb-1 flex items-center gap-1">
         {label}
         {tooltipContent && <InfoTooltip content={tooltipContent} />}

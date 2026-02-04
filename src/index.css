@@ -1,1 +1,23 @@
 @import "tailwindcss";
+
+@theme {
+  /* Brand Colors - Matching the logo (Blue Dog & Gold Coin) */
+  --color-brand-50: #eff6ff;
+  --color-brand-100: #dbeafe;
+  --color-brand-500: #3b82f6;
+  --color-brand-600: #2563eb;
+  --color-brand-700: #1d4ed8;
+
+  --color-accent-50: #fffbeb;
+  --color-accent-500: #f59e0b;
+  --color-accent-600: #d97706;
+
+  /* Custom Font Stack for Japanese readability */
+  --font-sans: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply text-gray-700 bg-gray-50;
+  }
+}
