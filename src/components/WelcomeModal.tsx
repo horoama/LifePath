@@ -5,8 +5,17 @@ export function WelcomeModal() {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    setIsOpen(true);
+    // Check if the user has visited before
+    const hasVisited = localStorage.getItem('hasVisited');
+    if (!hasVisited) {
+      setIsOpen(true);
+    }
   }, []);
+
+  const handleClose = () => {
+    localStorage.setItem('hasVisited', 'true');
+    setIsOpen(false);
+  };
 
   if (!isOpen) return null;
 
@@ -19,7 +28,7 @@ export function WelcomeModal() {
             <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="Logo" className="w-8 h-8 bg-white rounded-full p-1" />
             人生見えるくんへようこそ
           </h2>
-          <button onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white transition-colors cursor-pointer">
+          <button onClick={handleClose} className="text-white/80 hover:text-white transition-colors cursor-pointer">
             <X size={24} />
           </button>
         </div>
@@ -48,7 +57,7 @@ export function WelcomeModal() {
         {/* Footer */}
         <div className="p-4 bg-gray-50 flex justify-center border-t border-gray-100">
           <button
-            onClick={() => setIsOpen(false)}
+            onClick={handleClose}
             className="bg-brand hover:bg-brand-light text-white font-bold py-3 px-8 rounded-full shadow-lg transform transition-all hover:scale-105 active:scale-95 cursor-pointer"
           >
             シミュレーションを始める
