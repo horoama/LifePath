@@ -18,6 +18,7 @@ function App() {
     incomeIncreaseRatePct: 0.0,
     deathAge: 90,
     monthlyIncome: 30,
+    annualBonus: 0,
     retirementAge: 65,
     retirementBonus: 1000,
     postRetirementJobs: [],
