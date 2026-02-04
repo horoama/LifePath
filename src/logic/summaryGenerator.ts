@@ -93,9 +93,169 @@ export function generateSimulationSummary(
       lines.push(`退職時(${input.retirementAge}歳)の資産: ${retirementRow.yearEndBalance.toLocaleString()}万円`);
   }
 
+  lines.push('--------------------------------------------------');
+
+  // --- 3. Detailed Financial Breakdown ---
+  lines.push('【生涯収支・詳細】');
+
+  // Initialize Accumulators
+  const lifetime = createBreakdownStats();
+  const working = createBreakdownStats();
+  const retired = createBreakdownStats();
+
+  const inflationRate = (input.inflationRatePct || 0) / 100.0;
+
+  data.forEach(row => {
+    const isWorking = row.age < input.retirementAge;
+    const stats = isWorking ? working : retired;
+
+    // Inflation Factor for Real Value calculation
+    const factor = Math.pow(1 + inflationRate, row.yearsPassed);
+
+    // --- Income ---
+    // Salary
+    add(lifetime.income.salary, row.incomeBreakdown.salary, factor);
+    add(stats.income.salary, row.incomeBreakdown.salary, factor);
+
+    // Bonus (Retirement Bonus)
+    add(lifetime.income.bonus, row.incomeBreakdown.bonus, factor);
+    add(stats.income.bonus, row.incomeBreakdown.bonus, factor);
+
+    // Pension/Re-employment
+    add(lifetime.income.pension, row.incomeBreakdown.pension, factor);
+    add(stats.income.pension, row.incomeBreakdown.pension, factor);
+
+    // One-time Income
+    add(lifetime.income.oneTime, row.incomeBreakdown.oneTime, factor);
+    add(stats.income.oneTime, row.incomeBreakdown.oneTime, factor);
+
+    // Investment Income
+    add(lifetime.income.investment, row.investmentIncome, factor);
+    add(stats.income.investment, row.investmentIncome, factor);
+
+    // Total Income (Annual Income + Investment Income)
+    const annualTotalIncome = row.annualIncome + row.investmentIncome;
+    add(lifetime.income.total, annualTotalIncome, factor);
+    add(stats.income.total, annualTotalIncome, factor);
+
+
+    // --- Expenses ---
+    // Living
+    add(lifetime.expense.living, row.expenseBreakdown.living, factor);
+    add(stats.expense.living, row.expenseBreakdown.living, factor);
+
+    // Housing
+    add(lifetime.expense.housing, row.expenseBreakdown.housing, factor);
+    add(stats.expense.housing, row.expenseBreakdown.housing, factor);
+
+    // Education
+    add(lifetime.expense.education, row.expenseBreakdown.education, factor);
+    add(stats.expense.education, row.expenseBreakdown.education, factor);
+
+    // One-time Expense
+    add(lifetime.expense.oneTime, row.expenseBreakdown.oneTime, factor);
+    add(stats.expense.oneTime, row.expenseBreakdown.oneTime, factor);
+
+    // Total Expense
+    add(lifetime.expense.total, row.annualExpenses, factor);
+    add(stats.expense.total, row.annualExpenses, factor);
+  });
+
+  // Helper to format Amount
+  const fmt = (amt: Amount) => `${Math.round(amt.nominal).toLocaleString()}万円 (実質: ${Math.round(amt.real).toLocaleString()}万円)`;
+
+  // Output: Lifetime
+  lines.push('■ 全期間合計');
+  lines.push(`総収入: ${fmt(lifetime.income.total)}`);
+  lines.push(`  - 給与・賞与: ${fmt(lifetime.income.salary)}`);
+  if (lifetime.income.bonus.nominal > 0) lines.push(`  - 退職金: ${fmt(lifetime.income.bonus)}`);
+  if (lifetime.income.pension.nominal > 0) lines.push(`  - 年金・再雇用: ${fmt(lifetime.income.pension)}`);
+  if (lifetime.income.oneTime.nominal > 0) lines.push(`  - 一時収入: ${fmt(lifetime.income.oneTime)}`);
+  lines.push(`  - 資産運用益: ${fmt(lifetime.income.investment)}`);
+
+  lines.push('');
+  lines.push(`総支出: ${fmt(lifetime.expense.total)}`);
+  lines.push(`  - 基本生活費: ${fmt(lifetime.expense.living)}`);
+  lines.push(`  - 住居費: ${fmt(lifetime.expense.housing)}`);
+  if (lifetime.expense.education.nominal > 0) lines.push(`  - 教育費: ${fmt(lifetime.expense.education)}`);
+  if (lifetime.expense.oneTime.nominal > 0) lines.push(`  - 一時支出: ${fmt(lifetime.expense.oneTime)}`);
+
+  lines.push('');
+  const netNominal = lifetime.income.total.nominal - lifetime.expense.total.nominal;
+  const netReal = lifetime.income.total.real - lifetime.expense.total.real;
+  lines.push(`生涯収支: ${netNominal > 0 ? '+' : ''}${Math.round(netNominal).toLocaleString()}万円 (実質: ${netReal > 0 ? '+' : ''}${Math.round(netReal).toLocaleString()}万円)`);
+
+  lines.push('');
+  lines.push('--------------------');
+
+  // Output: Working Phase
+  lines.push(`■ 現役期間 (〜${input.retirementAge - 1}歳)`);
+  lines.push(`収入合計: ${fmt(working.income.total)}`);
+  lines.push(`支出合計: ${fmt(working.expense.total)}`);
+  const workNet = working.income.total.nominal - working.expense.total.nominal;
+  const workNetReal = working.income.total.real - working.expense.total.real;
+  lines.push(`期間収支: ${workNet > 0 ? '+' : ''}${Math.round(workNet).toLocaleString()}万円 (実質: ${workNetReal > 0 ? '+' : ''}${Math.round(workNetReal).toLocaleString()}万円)`);
+
+  lines.push('');
+
+  // Output: Retired Phase
+  lines.push(`■ 老後期間 (${input.retirementAge}歳〜)`);
+  lines.push(`収入合計: ${fmt(retired.income.total)}`);
+  lines.push(`支出合計: ${fmt(retired.expense.total)}`);
+  const retNet = retired.income.total.nominal - retired.expense.total.nominal;
+  const retNetReal = retired.income.total.real - retired.expense.total.real;
+  lines.push(`期間収支: ${retNet > 0 ? '+' : ''}${Math.round(retNet).toLocaleString()}万円 (実質: ${retNetReal > 0 ? '+' : ''}${Math.round(retNetReal).toLocaleString()}万円)`);
+
   return lines.join('\n');
 }
 
 function formatDuration(duration: number | 'infinite'): string {
     return duration === 'infinite' ? '永続' : `${duration}年間`;
+}
+
+// --- Helper Types & Functions for Breakdown ---
+
+type Amount = { nominal: number; real: number };
+
+type BreakdownStats = {
+  income: {
+    total: Amount;
+    salary: Amount;
+    bonus: Amount;
+    pension: Amount;
+    oneTime: Amount;
+    investment: Amount;
+  };
+  expense: {
+    total: Amount;
+    living: Amount;
+    housing: Amount;
+    education: Amount;
+    oneTime: Amount;
+  };
+};
+
+function createBreakdownStats(): BreakdownStats {
+  return {
+    income: {
+      total: { nominal: 0, real: 0 },
+      salary: { nominal: 0, real: 0 },
+      bonus: { nominal: 0, real: 0 },
+      pension: { nominal: 0, real: 0 },
+      oneTime: { nominal: 0, real: 0 },
+      investment: { nominal: 0, real: 0 },
+    },
+    expense: {
+      total: { nominal: 0, real: 0 },
+      living: { nominal: 0, real: 0 },
+      housing: { nominal: 0, real: 0 },
+      education: { nominal: 0, real: 0 },
+      oneTime: { nominal: 0, real: 0 },
+    },
+  };
+}
+
+function add(target: Amount, nominalVal: number, inflationFactor: number) {
+  target.nominal += nominalVal;
+  target.real += nominalVal / inflationFactor;
 }
