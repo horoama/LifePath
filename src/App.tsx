@@ -23,10 +23,10 @@ function App() {
     retirementBonus: 1000,
     postRetirementJobs: [],
     livingCostPlans: [
-      { cost: 15, duration: 'infinite' }
+      { cost: 15, endAge: 'infinite' }
     ],
     housingPlans: [
-      { cost: 10, duration: 'infinite' }
+      { cost: 10, endAge: 'infinite' }
     ],
     children: [],
     oneTimeEvents: []

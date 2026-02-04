@@ -1,11 +1,11 @@
 export type HousingPlan = {
   cost: number;
-  duration: number | 'infinite';
+  endAge: number | 'infinite';
 };
 
 export type ExpensePlan = {
   cost: number;
-  duration: number | 'infinite';
+  endAge: number | 'infinite';
 };
 
 export type PostRetirementJob = {
@@ -202,23 +202,20 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
     // 1. Basic Living Cost (Inflated)
     // nominal = base * inflationFactor
     let currentLivingCostBase = 0;
-    let livingCumulativeYears = 0;
     let livingPlanFound = false;
 
     for (const plan of livingCostPlans) {
-      const { duration, cost } = plan;
-      if (duration === 'infinite') {
+      const { endAge: planEndAge, cost } = plan;
+      if (planEndAge === 'infinite') {
         currentLivingCostBase = cost;
         livingPlanFound = true;
         break;
       }
-      const dur = duration as number;
-      if (yearsPassed < livingCumulativeYears + dur) {
+      if (age < planEndAge) {
         currentLivingCostBase = cost;
         livingPlanFound = true;
         break;
       }
-      livingCumulativeYears += dur;
     }
     if (!livingPlanFound && livingCostPlans.length > 0) {
         currentLivingCostBase = livingCostPlans[livingCostPlans.length - 1].cost;
@@ -228,23 +225,20 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
 
     // 2. Housing Cost (NOT Inflated - Fixed Nominal)
     let currentHousingCostBase = 0;
-    let cumulativeYears = 0;
     let planFound = false;
 
     for (const plan of housingPlans) {
-      const { duration, cost } = plan;
-      if (duration === 'infinite') {
+      const { endAge: planEndAge, cost } = plan;
+      if (planEndAge === 'infinite') {
         currentHousingCostBase = cost;
         planFound = true;
         break;
       }
-      const dur = duration as number;
-      if (yearsPassed < cumulativeYears + dur) {
+      if (age < planEndAge) {
         currentHousingCostBase = cost;
         planFound = true;
         break;
       }
-      cumulativeYears += dur;
     }
     if (!planFound && housingPlans.length > 0) {
         currentHousingCostBase = housingPlans[housingPlans.length - 1].cost;

@@ -14,11 +14,17 @@ export function ExpenseSection({ input, setInput }: Props) {
       const newPlans = [...prev.livingCostPlans];
       if (newPlans.length > 0) {
           const lastIndex = newPlans.length - 1;
-          if (newPlans[lastIndex].duration === 'infinite') {
-              newPlans[lastIndex] = { ...newPlans[lastIndex], duration: 10 };
+          const prevEndAge = newPlans.length > 1 && typeof newPlans[lastIndex - 1].endAge === 'number'
+            ? newPlans[lastIndex - 1].endAge as number
+            : prev.currentAge;
+
+          if (newPlans[lastIndex].endAge === 'infinite') {
+              // Default new plan to last for 10 years after previous
+              const newEndAge = Math.max(prevEndAge, prev.currentAge) + 10;
+              newPlans[lastIndex] = { ...newPlans[lastIndex], endAge: newEndAge };
           }
       }
-      newPlans.push({ cost: 15, duration: 'infinite' });
+      newPlans.push({ cost: 15, endAge: 'infinite' });
       return { ...prev, livingCostPlans: newPlans };
     });
   };
@@ -28,7 +34,7 @@ export function ExpenseSection({ input, setInput }: Props) {
         const filteredPlans = prev.livingCostPlans.filter((_, i) => i !== index);
         if (filteredPlans.length > 0) {
             const lastIndex = filteredPlans.length - 1;
-            filteredPlans[lastIndex] = { ...filteredPlans[lastIndex], duration: 'infinite' };
+            filteredPlans[lastIndex] = { ...filteredPlans[lastIndex], endAge: 'infinite' };
         }
         return { ...prev, livingCostPlans: filteredPlans };
     });
@@ -37,6 +43,21 @@ export function ExpenseSection({ input, setInput }: Props) {
   const updateLivingCostPlan = <K extends keyof ExpensePlan>(index: number, field: K, value: ExpensePlan[K]) => {
     setInput(prev => {
       const newPlans = [...prev.livingCostPlans];
+
+      // Validation for endAge
+      if (field === 'endAge' && typeof value === 'number') {
+        const prevPlanEndAge = index > 0 && typeof newPlans[index - 1].endAge === 'number'
+            ? newPlans[index - 1].endAge as number
+            : prev.currentAge;
+
+        // Cannot be earlier than previous plan or current age
+        if (value <= prevPlanEndAge) {
+            return prev; // Or clamp/handle gracefully? For now, strict reject or clamp?
+            // Let's rely on user not inputting invalid data, or clamp it?
+            // value = prevPlanEndAge + 1;
+        }
+      }
+
       newPlans[index] = { ...newPlans[index], [field]: value };
       return { ...prev, livingCostPlans: newPlans };
     });
@@ -49,6 +70,12 @@ export function ExpenseSection({ input, setInput }: Props) {
       <div className="space-y-4">
         {input.livingCostPlans.map((plan, i) => {
           const isLast = i === input.livingCostPlans.length - 1;
+
+          // Determine min age for this plan
+          const minAge = i === 0
+            ? input.currentAge + 1
+            : (input.livingCostPlans[i - 1].endAge as number) + 1;
+
           return (
             <div key={i} className="bg-gray-50 p-3 rounded border border-gray-200 relative">
               <div className="flex justify-between items-center mb-2">
@@ -73,7 +100,15 @@ export function ExpenseSection({ input, setInput }: Props) {
                 </div>
               ) : (
                 <>
-                    <NumberInput label="期間 (年)" value={plan.duration as number} onChange={v => updateLivingCostPlan(i, 'duration', v)} tooltipContent={TOOLTIPS.housingDuration} />
+                    <NumberInput
+                        label="終了年齢 (歳まで)"
+                        value={plan.endAge as number}
+                        onChange={v => updateLivingCostPlan(i, 'endAge', Math.max(minAge, v))}
+                        tooltipContent={TOOLTIPS.housingDuration}
+                    />
+                    <p className="text-xs text-gray-400 text-right mt-1">
+                        ※ {minAge}歳 〜 {plan.endAge}歳
+                    </p>
                 </>
               )}
             </div>

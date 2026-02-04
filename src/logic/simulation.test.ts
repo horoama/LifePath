@@ -15,8 +15,8 @@ describe('calculateSimulation with Inflation and Growth (Nominal Output)', () =>
     retirementAge: 60,
     retirementBonus: 0,
     postRetirementJobs: [],
-    livingCostPlans: [{ cost: 10, duration: 'infinite' }],
-    housingPlans: [{ cost: 5, duration: 'infinite' }],
+    livingCostPlans: [{ cost: 10, endAge: 'infinite' }],
+    housingPlans: [{ cost: 5, endAge: 'infinite' }],
     children: [],
     oneTimeEvents: []
   };
@@ -108,7 +108,7 @@ describe('calculateSimulation with Inflation and Growth (Nominal Output)', () =>
         ...baseInput,
         currentAssets: 100, // Low initial
         monthlyIncome: 10,  // 120/yr
-        livingCostPlans: [{ cost: 50, duration: 'infinite' }], // 600/yr (Deficit 480/yr)
+        livingCostPlans: [{ cost: 50, endAge: 'infinite' }], // 600/yr (Deficit 480/yr)
         interestRatePct: 10.0, // High interest
         deathAge: 35
     };
@@ -135,15 +135,23 @@ describe('calculateSimulation with Inflation and Growth (Nominal Output)', () =>
     }
   });
 
-  it('should switch living cost plans at correct time', () => {
+  it('should switch living cost plans at correct age', () => {
     const multiPlanInput: SimulationInput = {
       ...baseInput,
+      currentAge: 30,
       deathAge: 40,
       livingCostPlans: [
-        { cost: 10, duration: 2 }, // Age 30, 31
-        { cost: 20, duration: 'infinite' } // Age 32+
+        { cost: 10, endAge: 32 }, // Until age 32 (exclusive? or inclusive? implementation says < endAge so exclusive of end year but active UNTIL that age number is reached?)
+        // Wait, logic is: if age < endAge.
+        // If endAge is 32.
+        // Age 30 < 32 -> Plan 1
+        // Age 31 < 32 -> Plan 1
+        // Age 32 < 32 -> False -> Next Plan
+        // So endAge is "Up to but not including the year you turn X"? Or "Until X years old"?
+        // The UI usually implies "Until age X" means "At age X-1 it applies, at age X it switches".
+        { cost: 20, endAge: 'infinite' }
       ],
-      inflationRatePct: 0.0 // Keep 0 to verify base switching logic first
+      inflationRatePct: 0.0
     };
     const result = calculateSimulation(multiPlanInput);
 
@@ -151,7 +159,7 @@ describe('calculateSimulation with Inflation and Growth (Nominal Output)', () =>
     expect(result[0].expenseBreakdown.living).toBe(10 * 12);
     // Age 31 (Year 1)
     expect(result[1].expenseBreakdown.living).toBe(10 * 12);
-    // Age 32 (Year 2)
+    // Age 32 (Year 2) -> Should switch
     expect(result[2].expenseBreakdown.living).toBe(20 * 12);
     // Age 33 (Year 3)
     expect(result[3].expenseBreakdown.living).toBe(20 * 12);
@@ -160,10 +168,11 @@ describe('calculateSimulation with Inflation and Growth (Nominal Output)', () =>
   it('should apply inflation to switched living cost plans', () => {
     const multiPlanInput: SimulationInput = {
       ...baseInput,
+      currentAge: 30,
       deathAge: 40,
       livingCostPlans: [
-        { cost: 10, duration: 2 }, // Age 30, 31
-        { cost: 20, duration: 'infinite' } // Age 32+
+        { cost: 10, endAge: 32 },
+        { cost: 20, endAge: 'infinite' }
       ],
       inflationRatePct: 10.0 // 10% easy math
     };
