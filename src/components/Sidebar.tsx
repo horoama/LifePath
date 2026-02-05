@@ -38,6 +38,17 @@ export function Sidebar({ input, setInput, targetAmount, setTargetAmount }: Side
         <HousingSection input={input} setInput={setInput} />
         <FamilySection input={input} setInput={setInput} />
         <LifeEventSection input={input} setInput={setInput} />
+
+        <div className="pt-6 border-t border-gray-100 text-center">
+          <a
+            href="https://forms.gle/NRh4gBUFodRkW8jb8"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-gray-500 hover:text-brand underline"
+          >
+            お問い合わせ・ご意見はこちら
+          </a>
+        </div>
       </div>
     </div>
   );
