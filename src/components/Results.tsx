@@ -292,40 +292,40 @@ export function Results({ data, targetAmount, retirementAge, input }: ResultsPro
           <table className="min-w-full text-sm text-left text-gray-500">
             <thead className="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0 z-10">
               <tr>
-                <th className="px-4 py-3 whitespace-nowrap">年齢</th>
-                <th className="px-4 py-3 whitespace-nowrap">
+                <th className="px-4 py-3">年齢</th>
+                <th className="px-4 py-3">
                   <div className="flex items-center gap-1">
                     イベント
                     <InfoTooltip content="その年に発生する主なライフイベント（退職、子供の誕生・進学など）です。" />
                   </div>
                 </th>
-                <th className="px-4 py-3 whitespace-nowrap text-right">
+                <th className="px-4 py-3 text-right">
                   <div className="flex items-center justify-end gap-1">
-                    年間収入
+                    収入
                     <InfoTooltip content="給与、ボーナス、年金、一時収入の合計です（運用益は含みません）。名目値で表示されています。" />
                   </div>
                 </th>
-                <th className="px-4 py-3 whitespace-nowrap text-right">
+                <th className="px-4 py-3 text-right">
                   <div className="flex items-center justify-end gap-1">
-                    年間支出
+                    支出
                     <InfoTooltip content="基本生活費、住居費、教育費、一時支出の合計です。名目値で表示されています。" />
                   </div>
                 </th>
-                <th className="px-4 py-3 whitespace-nowrap text-right">
+                <th className="px-4 py-3 text-right">
                   <div className="flex items-center justify-end gap-1">
-                    年間収支(貯蓄)
+                    収支
                     <InfoTooltip content="年間収入 － 年間支出 です。プラスなら資産増、マイナスなら資産取り崩しとなります。" />
                   </div>
                 </th>
-                <th className="px-4 py-3 whitespace-nowrap text-right text-green-600">
+                <th className="px-4 py-3 text-right text-green-600">
                   <div className="flex items-center justify-end gap-1">
                     運用益
                     <InfoTooltip content="期首資産 × 想定年利 で計算された運用益です。全額再投資される前提です。" />
                   </div>
                 </th>
-                <th className="px-4 py-3 whitespace-nowrap text-right font-bold">
+                <th className="px-4 py-3 text-right font-bold">
                   <div className="flex items-center justify-end gap-1">
-                    年末資産残高
+                    資産残高
                     <InfoTooltip content="運用益を加えた年末時点の総資産額です（名目値）。" />
                   </div>
                 </th>
@@ -336,7 +336,7 @@ export function Results({ data, targetAmount, retirementAge, input }: ResultsPro
                 <tr key={row.age} className="bg-white border-b hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium text-gray-900">{row.age}</td>
                   <td className="px-4 py-3">
-                    <div className="truncate max-w-40" title={row.event}>{row.event || '-'}</div>
+                    <div title={row.event}>{row.event || '-'}</div>
                   </td>
 
                   <td className="px-4 py-3 text-right" title={`給与収入: ${row.incomeBreakdown.salary.toLocaleString()}
