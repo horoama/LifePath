@@ -6,6 +6,7 @@ import { ExpenseSection } from './sidebar/ExpenseSection';
 import { HousingSection } from './sidebar/HousingSection';
 import { FamilySection } from './sidebar/FamilySection';
 import { LifeEventSection } from './sidebar/LifeEventSection';
+import { ShareButton } from './ShareButton';
 
 type SidebarProps = {
   input: SimulationInput;
@@ -21,10 +22,13 @@ export function Sidebar({ input, setInput, targetAmount, setTargetAmount }: Side
 
   return (
     <div className="w-full lg:w-96 bg-white p-6 shadow-lg overflow-y-auto h-screen sticky top-0 border-r border-gray-100">
-      <h2 className="hidden lg:flex text-xl font-bold mb-6 text-gray-800 items-center gap-2">
-        <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="Logo" className="w-12 h-12" />
-        <span className="text-brand">人生見えるくん</span>
-      </h2>
+      <div className="hidden lg:flex justify-between items-center mb-6">
+        <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+          <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="Logo" className="w-12 h-12" />
+          <span className="text-brand">人生見えるくん</span>
+        </h2>
+        <ShareButton input={input} targetAmount={targetAmount} />
+      </div>
 
       <div className="space-y-8">
         <BasicInfoSection input={input} handleChange={handleChange} targetAmount={targetAmount} setTargetAmount={setTargetAmount} />

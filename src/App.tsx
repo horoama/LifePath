@@ -1,10 +1,12 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Results } from './components/Results';
 import { WelcomeModal } from './components/WelcomeModal';
 import { calculateSimulation } from './logic/simulation';
+import { getSharedStateFromUrl, clearShareParamFromUrl } from './utils/urlShare';
 import type { SimulationInput } from './logic/simulation';
 import { Settings, BarChart3 } from 'lucide-react';
+import { ShareButton } from './components/ShareButton';
 
 function App() {
   const [targetAmount, setTargetAmount] = useState<number>(3000);
@@ -32,6 +34,16 @@ function App() {
     oneTimeEvents: []
   });
 
+  // Load shared state from URL on mount
+  useEffect(() => {
+    const sharedState = getSharedStateFromUrl();
+    if (sharedState) {
+      setInput(sharedState.input);
+      setTargetAmount(sharedState.targetAmount);
+      clearShareParamFromUrl();
+    }
+  }, []);
+
   const simulationData = useMemo(() => {
     return calculateSimulation(input);
   }, [input]);
@@ -43,9 +55,12 @@ function App() {
       {/* Mobile Sticky Header Container */}
       <div className="lg:hidden sticky top-0 z-40 bg-white shadow-md">
         {/* Mobile Branding Header */}
-        <div className="flex items-center gap-2 p-4 bg-brand text-white shadow-sm">
-          <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="Logo" className="w-8 h-8 bg-white rounded-full p-1" />
-          <h1 className="text-lg font-bold">人生見えるくん</h1>
+        <div className="flex items-center justify-between p-4 bg-brand text-white shadow-sm">
+          <div className="flex items-center gap-2">
+            <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="Logo" className="w-8 h-8 bg-white rounded-full p-1" />
+            <h1 className="text-lg font-bold">人生見えるくん</h1>
+          </div>
+          <ShareButton input={input} targetAmount={targetAmount} className="bg-white/20 hover:bg-white/30 rounded-full text-white" />
         </div>
 
         {/* Mobile Toggle Buttons */}
