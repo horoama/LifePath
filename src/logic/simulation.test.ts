@@ -187,4 +187,28 @@ describe('calculateSimulation with Inflation and Growth (Nominal Output)', () =>
     // Age 32 (Year 2): 20 * 12 * 1.1^2 = 240 * 1.21 = 290.4
     expect(result[2].expenseBreakdown.living).toBeCloseTo(290.4, 2);
   });
+
+  it('should continue post-retirement income until death when endAge is infinite', () => {
+    const infiniteJobInput: SimulationInput = {
+      ...baseInput,
+      currentAge: 60,
+      deathAge: 70,
+      retirementAge: 60, // Ensure main job is finished
+      postRetirementJobs: [
+        { startAge: 60, endAge: 'infinite', monthlyIncome: 10, retirementBonus: 500 }
+      ]
+    };
+    const result = calculateSimulation(infiniteJobInput);
+
+    // Should have income every year from 60 to 70
+    result.forEach(year => {
+      // Post Retirement Job: 10 * 12 = 120.
+      // Should be 120 every year.
+      expect(year.incomeBreakdown.pension).toBe(120);
+    });
+
+    // Should NOT receive retirement bonus from the infinite job
+    const bonusEvents = result.flatMap(r => r.event.split(', ')).filter(e => e.includes('再雇用退職金'));
+    expect(bonusEvents).toHaveLength(0);
+  });
 });

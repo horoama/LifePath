@@ -10,7 +10,7 @@ export type ExpensePlan = {
 
 export type PostRetirementJob = {
   startAge: number;
-  endAge: number;
+  endAge: number | 'infinite';
   monthlyIncome: number;
   retirementBonus: number;
 };
@@ -171,10 +171,14 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
 
     // 2. Post-Retirement Jobs (Assume fixed nominal for now unless specified)
     postRetirementJobs.forEach(job => {
-      if (age >= job.startAge && age < job.endAge) {
+      const isOngoing = job.endAge === 'infinite'
+        ? age >= job.startAge
+        : (age >= job.startAge && age < job.endAge);
+
+      if (isOngoing) {
         postRetirementIncome += job.monthlyIncome * 12;
       }
-      if (age === job.endAge) {
+      if (job.endAge !== 'infinite' && age === job.endAge) {
         postRetirementIncome += job.retirementBonus;
         eventNotes.push(`再雇用退職金(+${job.retirementBonus})`);
       }
