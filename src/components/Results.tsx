@@ -335,7 +335,9 @@ export function Results({ data, targetAmount, retirementAge, input }: ResultsPro
               {data.map((row) => (
                 <tr key={row.age} className="bg-white border-b hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium text-gray-900">{row.age}</td>
-                  <td className="px-4 py-3 max-w-xs truncate" title={row.event}>{row.event || '-'}</td>
+                  <td className="px-4 py-3">
+                    <div className="truncate max-w-40" title={row.event}>{row.event || '-'}</div>
+                  </td>
 
                   <td className="px-4 py-3 text-right" title={`給与収入: ${row.incomeBreakdown.salary.toLocaleString()}
 退職金: ${row.incomeBreakdown.bonus.toLocaleString()}
