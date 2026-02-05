@@ -1,16 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { X } from 'lucide-react';
 
 export function WelcomeModal() {
-  const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
+  const [isOpen, setIsOpen] = useState(() => {
     // Check if the user has visited before
-    const hasVisited = localStorage.getItem('hasVisited');
-    if (!hasVisited) {
-      setIsOpen(true);
+    if (typeof window !== 'undefined') {
+      const hasVisited = localStorage.getItem('hasVisited');
+      return !hasVisited;
     }
-  }, []);
+    return false;
+  });
 
   const handleClose = () => {
     localStorage.setItem('hasVisited', 'true');

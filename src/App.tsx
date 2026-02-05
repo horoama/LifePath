@@ -8,38 +8,47 @@ import type { SimulationInput } from './logic/simulation';
 import { Settings, BarChart3 } from 'lucide-react';
 import { ShareButton } from './components/ShareButton';
 
-function App() {
-  const [targetAmount, setTargetAmount] = useState<number>(3000);
-  const [activeTab, setActiveTab] = useState<'input' | 'result'>('input');
+const DEFAULT_INPUT: SimulationInput = {
+  currentAge: 30,
+  currentAssets: 500,
+  interestRatePct: 3.0,
+  inflationRatePct: 0.0,
+  incomeIncreaseRatePct: 0.0,
+  deathAge: 90,
+  monthlyIncome: 30,
+  annualBonus: 0,
+  retirementAge: 65,
+  retirementBonus: 1000,
+  postRetirementJobs: [],
+  livingCostPlans: [
+    { cost: 15, endAge: 'infinite' }
+  ],
+  housingPlans: [
+    { cost: 10, endAge: 'infinite' }
+  ],
+  children: [],
+  oneTimeEvents: []
+};
 
-  const [input, setInput] = useState<SimulationInput>({
-    currentAge: 30,
-    currentAssets: 500,
-    interestRatePct: 3.0,
-    inflationRatePct: 0.0,
-    incomeIncreaseRatePct: 0.0,
-    deathAge: 90,
-    monthlyIncome: 30,
-    annualBonus: 0,
-    retirementAge: 65,
-    retirementBonus: 1000,
-    postRetirementJobs: [],
-    livingCostPlans: [
-      { cost: 15, endAge: 'infinite' }
-    ],
-    housingPlans: [
-      { cost: 10, endAge: 'infinite' }
-    ],
-    children: [],
-    oneTimeEvents: []
+function App() {
+  const [targetAmount, setTargetAmount] = useState<number>(() => {
+    const sharedState = getSharedStateFromUrl();
+    return sharedState ? sharedState.targetAmount : 3000;
   });
 
-  // Load shared state from URL on mount
-  useEffect(() => {
+  const [activeTab, setActiveTab] = useState<'input' | 'result'>('input');
+
+  const [input, setInput] = useState<SimulationInput>(() => {
     const sharedState = getSharedStateFromUrl();
     if (sharedState) {
-      setInput(sharedState.input);
-      setTargetAmount(sharedState.targetAmount);
+      return sharedState.input;
+    }
+    return DEFAULT_INPUT;
+  });
+
+  // Clear URL param after initialization
+  useEffect(() => {
+    if (getSharedStateFromUrl()) {
       clearShareParamFromUrl();
     }
   }, []);
