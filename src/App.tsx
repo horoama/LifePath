@@ -108,7 +108,7 @@ function App() {
       </div>
 
       {/* Results (Graph) */}
-      <div className={`flex-1 ${activeTab === 'result' ? 'block' : 'hidden lg:block'}`}>
+      <div className={`flex-1 min-w-0 ${activeTab === 'result' ? 'block' : 'hidden lg:block'}`}>
         <Results
           data={simulationData}
           targetAmount={targetAmount}
