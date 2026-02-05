@@ -49,7 +49,43 @@ export function PostRetirementJobSection({ input, setInput }: Props) {
             </div>
             <div className="grid grid-cols-2 gap-2 mb-2">
               <NumberInput label="開始年齢" value={job.startAge} onChange={v => updateJob(i, 'startAge', v)} tooltipContent={TOOLTIPS.postRetirementStartAge} />
-              <NumberInput label="終了年齢" value={job.endAge} onChange={v => updateJob(i, 'endAge', v)} tooltipContent={TOOLTIPS.postRetirementEndAge} />
+              <div className="relative">
+                <div className="absolute top-0 right-0 z-10">
+                  <label className="flex items-center gap-1 cursor-pointer bg-gray-50 pl-1">
+                    <input
+                      type="checkbox"
+                      checked={job.endAge === 'infinite'}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          updateJob(i, 'endAge', 'infinite');
+                        } else {
+                          updateJob(i, 'endAge', job.startAge + 5);
+                        }
+                      }}
+                      className="w-3 h-3 text-brand rounded border-gray-300 focus:ring-brand"
+                    />
+                    <span className="text-[10px] text-gray-500">以降ずっと</span>
+                  </label>
+                </div>
+                {job.endAge === 'infinite' ? (
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1 flex items-center">
+                      終了年齢
+                      <Tooltip content={TOOLTIPS.postRetirementEndAge} />
+                    </label>
+                    <div className="w-full p-2 border border-gray-200 bg-gray-100 rounded text-sm text-gray-500 h-[38px] flex items-center">
+                      死ぬまで
+                    </div>
+                  </div>
+                ) : (
+                  <NumberInput
+                    label="終了年齢"
+                    value={job.endAge as number}
+                    onChange={v => updateJob(i, 'endAge', v)}
+                    tooltipContent={TOOLTIPS.postRetirementEndAge}
+                  />
+                )}
+              </div>
             </div>
             <NumberInput label="月収 (万円)" value={job.monthlyIncome} onChange={v => updateJob(i, 'monthlyIncome', v)} className="mb-2" tooltipContent={TOOLTIPS.postRetirementIncome} />
             <NumberInput label="退職金 (万円)" value={job.retirementBonus} onChange={v => updateJob(i, 'retirementBonus', v)} tooltipContent={TOOLTIPS.postRetirementBonus} />
