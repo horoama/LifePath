@@ -48,7 +48,7 @@ export function PostRetirementJobSection({ input, setInput }: Props) {
               </button>
             </div>
             <div className="grid grid-cols-2 gap-2 mb-2">
-              <NumberInput label="開始年齢" value={job.startAge} onChange={v => updateJob(i, 'startAge', v)} tooltipContent={TOOLTIPS.postRetirementStartAge} />
+              <NumberInput label="開始年齢" value={job.startAge} min={0} onChange={v => updateJob(i, 'startAge', v)} tooltipContent={TOOLTIPS.postRetirementStartAge} />
               <div className="relative">
                 <div className="absolute top-0 right-0 z-10">
                   <label className="flex items-center gap-1 cursor-pointer bg-gray-50 pl-1">
@@ -81,14 +81,15 @@ export function PostRetirementJobSection({ input, setInput }: Props) {
                   <NumberInput
                     label="終了年齢"
                     value={job.endAge as number}
+                    min={0}
                     onChange={v => updateJob(i, 'endAge', v)}
                     tooltipContent={TOOLTIPS.postRetirementEndAge}
                   />
                 )}
               </div>
             </div>
-            <NumberInput label="月収 (万円)" value={job.monthlyIncome} onChange={v => updateJob(i, 'monthlyIncome', v)} className="mb-2" tooltipContent={TOOLTIPS.postRetirementIncome} />
-            <NumberInput label="退職金 (万円)" value={job.retirementBonus} onChange={v => updateJob(i, 'retirementBonus', v)} tooltipContent={TOOLTIPS.postRetirementBonus} />
+            <NumberInput label="月収 (万円)" value={job.monthlyIncome} min={0} onChange={v => updateJob(i, 'monthlyIncome', v)} className="mb-2" tooltipContent={TOOLTIPS.postRetirementIncome} />
+            <NumberInput label="退職金 (万円)" value={job.retirementBonus} min={0} onChange={v => updateJob(i, 'retirementBonus', v)} tooltipContent={TOOLTIPS.postRetirementBonus} />
           </div>
         ))}
         <AddButton onClick={addJob} label="仕事を追加" />

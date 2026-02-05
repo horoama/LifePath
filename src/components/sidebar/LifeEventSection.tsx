@@ -57,8 +57,8 @@ export function LifeEventSection({ input, setInput }: Props) {
                 />
             </div>
             <div className="grid grid-cols-2 gap-2 mb-2">
-                <NumberInput label="年齢" value={evt.age} onChange={v => updateEvent(i, 'age', v)} tooltipContent={TOOLTIPS.eventAge} />
-                <NumberInput label="金額 (万円)" value={evt.amount} onChange={v => updateEvent(i, 'amount', v)} tooltipContent={TOOLTIPS.eventAmount} />
+                <NumberInput label="年齢" value={evt.age} min={0} onChange={v => updateEvent(i, 'age', v)} tooltipContent={TOOLTIPS.eventAge} />
+                <NumberInput label="金額 (万円)" value={evt.amount} min={0} onChange={v => updateEvent(i, 'amount', v)} tooltipContent={TOOLTIPS.eventAmount} />
             </div>
             <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
