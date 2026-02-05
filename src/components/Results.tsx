@@ -1,4 +1,4 @@
-import { useMemo, useRef, useCallback, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { toPng } from 'html-to-image';
 import { Camera, FileText, Download } from 'lucide-react';
 import {
@@ -16,173 +16,64 @@ type ResultsProps = {
   input: SimulationInput;
 };
 
-export function Results({ data, targetAmount, retirementAge, input }: ResultsProps) {
-  const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const tableContainerRef = useRef<HTMLDivElement>(null);
+type MetricData = {
+  targetAgeText: string;
+  retirementAssetText: string;
+  retirementIncomeText: string;
+};
 
-  const metrics = useMemo(() => {
-    // Target Reached Age (Using Nominal Balance)
-    const reachedRow = data.find(row => row.yearEndBalance >= targetAmount);
-    const targetAgeText = reachedRow ? `${reachedRow.age}歳` : "到達せず";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ChartData = any[];
 
-    // Asset at Retirement (Nominal)
-    const retirementRow = data.find(row => row.age === retirementAge);
-    const retirementAssetText = retirementRow
-      ? `${retirementRow.yearEndBalance.toLocaleString()} 万円`
-      : "データなし";
+type ResultsBodyProps = {
+  data: SimulationYearResult[];
+  metrics: MetricData;
+  chartData: ChartData;
+  targetAmount: number;
+  retirementAge: number;
+  isPrinting: boolean;
+  onOpenSummary: () => void;
+  onSaveImage: () => void;
+  onDownloadCSV: () => void;
+};
 
-    // Income at Retirement (Nominal)
-    const retirementIncomeText = retirementRow
-      ? `${retirementRow.investmentIncome.toLocaleString()} 万円`
-      : "データなし";
-
-    return { targetAgeText, retirementAssetText, retirementIncomeText };
-  }, [data, targetAmount, retirementAge]);
-
-  // Prepare chart data with target line
-  const chartData = useMemo(() => {
-    return data.map(d => ({
-      ...d,
-      target: targetAmount
-    }));
-  }, [data, targetAmount]);
-
-  const summaryText = useMemo(() => {
-    return generateSimulationSummary(input, data, targetAmount);
-  }, [input, data, targetAmount]);
-
-  const handleSaveImage = useCallback(() => {
-    if (ref.current === null || tableContainerRef.current === null) {
-      return;
-    }
-
-    // Save original styles
-    const originalRootOverflow = ref.current.style.overflow;
-    const originalTableMaxHeight = tableContainerRef.current.style.maxHeight;
-    const originalTableOverflow = tableContainerRef.current.style.overflow;
-
-    // Expand for capture
-    ref.current.style.overflow = 'visible';
-    tableContainerRef.current.style.maxHeight = 'none';
-    tableContainerRef.current.style.overflow = 'visible';
-
-    toPng(ref.current, {
-        cacheBust: true,
-        filter: (node) => {
-            if (node instanceof HTMLElement && node.classList.contains('no-capture')) {
-                return false;
-            }
-            return true;
-        }
-    })
-      .then((dataUrl) => {
-        const link = document.createElement('a');
-        link.download = 'simulation-results.png';
-        link.href = dataUrl;
-        link.click();
-      })
-      .catch((err) => {
-        console.error('Failed to capture image', err);
-      })
-      .finally(() => {
-        // Restore styles
-        if (ref.current) ref.current.style.overflow = originalRootOverflow;
-        if (tableContainerRef.current) {
-          tableContainerRef.current.style.maxHeight = originalTableMaxHeight;
-          tableContainerRef.current.style.overflow = originalTableOverflow;
-        }
-      });
-  }, [ref]);
-
-  const handleDownloadCSV = () => {
-    // Define headers
-    const headers = [
-      '年齢',
-      'イベント',
-      '年間収入',
-      '給与収入',
-      '退職金',
-      '再雇用・年金',
-      '一時収入',
-      '年間支出',
-      '基本生活費',
-      '住居費',
-      '教育・養育費',
-      '一時支出',
-      '年間収支(貯蓄)',
-      '運用益',
-      '年末資産残高(名目)',
-      '年末資産残高(実質)'
-    ];
-
-    // Map data to rows
-    const rows = data.map(row => [
-      row.age,
-      `"${row.event || ''}"`, // Quote events to handle commas
-      row.annualIncome,
-      row.incomeBreakdown.salary,
-      row.incomeBreakdown.bonus,
-      row.incomeBreakdown.pension,
-      row.incomeBreakdown.oneTime,
-      row.annualExpenses,
-      row.expenseBreakdown.living,
-      row.expenseBreakdown.housing,
-      row.expenseBreakdown.education,
-      row.expenseBreakdown.oneTime,
-      row.annualSavings,
-      row.investmentIncome,
-      row.yearEndBalance,
-      row.yearEndBalanceReal
-    ]);
-
-    // Combine headers and rows
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.join(','))
-    ].join('\n');
-
-    // Create blob and download link (with BOM for Excel)
-    const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'life_plan_simulation.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
+function ResultsBody({
+  data,
+  metrics,
+  chartData,
+  targetAmount,
+  retirementAge,
+  isPrinting,
+  onOpenSummary,
+  onSaveImage,
+  onDownloadCSV
+}: ResultsBodyProps) {
   return (
-    <div className="flex-1 p-8 overflow-y-auto bg-gray-100" ref={ref}>
-      <SummaryModal
-        isOpen={isSummaryModalOpen}
-        onClose={() => setIsSummaryModalOpen(false)}
-        summaryText={summaryText}
-      />
-
+    <div className={`flex-1 p-8 bg-gray-100 ${isPrinting ? '' : 'overflow-y-auto'}`}>
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-800">ライフプラン・シミュレーション結果</h1>
-        <div className="flex gap-2">
+        {!isPrinting && (
+          <div className="flex gap-2">
             <button
-                onClick={() => setIsSummaryModalOpen(true)}
-                className="no-capture flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded shadow transition-colors cursor-pointer"
+              onClick={onOpenSummary}
+              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded shadow transition-colors cursor-pointer"
             >
-                <FileText size={20} />
-                <span>結果をまとめる</span>
+              <FileText size={20} />
+              <span>結果をまとめる</span>
             </button>
             <button
-                onClick={handleSaveImage}
-                className="no-capture flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow transition-colors cursor-pointer"
+              onClick={onSaveImage}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow transition-colors cursor-pointer"
             >
-                <Camera size={20} />
-                <span>画像で保存</span>
+              <Camera size={20} />
+              <span>画像で保存</span>
             </button>
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className={`grid grid-cols-1 gap-6 mb-8 ${isPrinting ? 'grid-cols-3' : 'md:grid-cols-3'}`}>
         <MetricCard
           label={`目標${targetAmount}万円到達年齢`}
           value={metrics.targetAgeText}
@@ -217,63 +108,88 @@ export function Results({ data, targetAmount, retirementAge, input }: ResultsPro
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 <Tooltip formatter={(value: any) => typeof value === 'number' ? `${value.toLocaleString()} 万円` : value} />
                 <Legend />
-                <Area type="monotone" dataKey="yearEndBalance" name="総資産(名目)" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
-                <Area type="monotone" dataKey="yearEndBalanceReal" name="総資産(実質)" stroke="#82ca9d" fill="none" strokeDasharray="5 5" strokeWidth={2} />
-                <Area type="monotone" dataKey="target" name="目標額" stroke="#ff7f0e" fill="none" strokeDasharray="5 5" />
+                <Area
+                    type="monotone"
+                    dataKey="yearEndBalance"
+                    name="総資産(名目)"
+                    stroke="#8884d8"
+                    fill="#8884d8"
+                    fillOpacity={0.6}
+                    isAnimationActive={!isPrinting}
+                />
+                <Area
+                    type="monotone"
+                    dataKey="yearEndBalanceReal"
+                    name="総資産(実質)"
+                    stroke="#82ca9d"
+                    fill="none"
+                    strokeDasharray="5 5"
+                    strokeWidth={2}
+                    isAnimationActive={!isPrinting}
+                />
+                <Area
+                    type="monotone"
+                    dataKey="target"
+                    name="目標額"
+                    stroke="#ff7f0e"
+                    fill="none"
+                    strokeDasharray="5 5"
+                    isAnimationActive={!isPrinting}
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-            {/* Income Breakdown Chart */}
-            <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className={`grid grid-cols-1 gap-8 ${isPrinting ? 'grid-cols-2' : 'xl:grid-cols-2'}`}>
+          {/* Income Breakdown Chart */}
+          <div className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-xl font-semibold text-gray-700 mb-4 flex items-center gap-2">
               年間収入内訳
               <InfoTooltip content="年間の収入内訳（名目値）です。「運用益」は資産運用による利益を表します。" />
             </h2>
             <div className="h-[400px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="age" label={{ value: '年齢', position: 'insideBottomRight', offset: -5 }} unit="歳" />
-                    <YAxis label={{ value: '万円', angle: -90, position: 'insideLeft' }} />
-                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                    <Tooltip formatter={(value: any) => typeof value === 'number' ? `${value.toLocaleString()} 万円` : value} />
-                    <Legend />
-                    <Bar dataKey="incomeBreakdown.salary" name="給与収入" stackId="a" fill="#3b82f6" />
-                    <Bar dataKey="incomeBreakdown.bonus" name="退職金" stackId="a" fill="#0ea5e9" />
-                    <Bar dataKey="incomeBreakdown.pension" name="再雇用・年金" stackId="a" fill="#8b5cf6" />
-                    <Bar dataKey="incomeBreakdown.oneTime" name="一時収入" stackId="a" fill="#22c55e" />
-                    <Bar dataKey="investmentIncome" name="運用益" stackId="a" fill="#f59e0b" />
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="age" label={{ value: '年齢', position: 'insideBottomRight', offset: -5 }} unit="歳" />
+                  <YAxis label={{ value: '万円', angle: -90, position: 'insideLeft' }} />
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  <Tooltip formatter={(value: any) => typeof value === 'number' ? `${value.toLocaleString()} 万円` : value} />
+                  <Legend />
+                  <Bar dataKey="incomeBreakdown.salary" name="給与収入" stackId="a" fill="#3b82f6" isAnimationActive={!isPrinting} />
+                  <Bar dataKey="incomeBreakdown.bonus" name="退職金" stackId="a" fill="#0ea5e9" isAnimationActive={!isPrinting} />
+                  <Bar dataKey="incomeBreakdown.pension" name="再雇用・年金" stackId="a" fill="#8b5cf6" isAnimationActive={!isPrinting} />
+                  <Bar dataKey="incomeBreakdown.oneTime" name="一時収入" stackId="a" fill="#22c55e" isAnimationActive={!isPrinting} />
+                  <Bar dataKey="investmentIncome" name="運用益" stackId="a" fill="#f59e0b" isAnimationActive={!isPrinting} />
                 </BarChart>
-                </ResponsiveContainer>
+              </ResponsiveContainer>
             </div>
-            </div>
+          </div>
 
-            {/* Expense Breakdown Chart */}
-            <div className="bg-white p-6 rounded-lg shadow-md">
+          {/* Expense Breakdown Chart */}
+          <div className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-xl font-semibold text-gray-700 mb-4 flex items-center gap-2">
               年間支出内訳
               <InfoTooltip content="年間の支出内訳（名目値）です。インフレ率に応じて生活費や教育費が増加して表示されます。" />
             </h2>
             <div className="h-[400px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="age" label={{ value: '年齢', position: 'insideBottomRight', offset: -5 }} unit="歳" />
-                    <YAxis label={{ value: '万円', angle: -90, position: 'insideLeft' }} />
-                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                    <Tooltip formatter={(value: any) => typeof value === 'number' ? `${value.toLocaleString()} 万円` : value} />
-                    <Legend />
-                    <Bar dataKey="expenseBreakdown.living" name="基本生活費" stackId="a" fill="#f97316" />
-                    <Bar dataKey="expenseBreakdown.housing" name="住居費" stackId="a" fill="#ef4444" />
-                    <Bar dataKey="expenseBreakdown.education" name="教育・養育費" stackId="a" fill="#ec4899" />
-                    <Bar dataKey="expenseBreakdown.oneTime" name="一時支出" stackId="a" fill="#eab308" />
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="age" label={{ value: '年齢', position: 'insideBottomRight', offset: -5 }} unit="歳" />
+                  <YAxis label={{ value: '万円', angle: -90, position: 'insideLeft' }} />
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  <Tooltip formatter={(value: any) => typeof value === 'number' ? `${value.toLocaleString()} 万円` : value} />
+                  <Legend />
+                  <Bar dataKey="expenseBreakdown.living" name="基本生活費" stackId="a" fill="#f97316" isAnimationActive={!isPrinting} />
+                  <Bar dataKey="expenseBreakdown.housing" name="住居費" stackId="a" fill="#ef4444" isAnimationActive={!isPrinting} />
+                  <Bar dataKey="expenseBreakdown.education" name="教育・養育費" stackId="a" fill="#ec4899" isAnimationActive={!isPrinting} />
+                  <Bar dataKey="expenseBreakdown.oneTime" name="一時支出" stackId="a" fill="#eab308" isAnimationActive={!isPrinting} />
                 </BarChart>
-                </ResponsiveContainer>
+              </ResponsiveContainer>
             </div>
-            </div>
+          </div>
         </div>
       </div>
 
@@ -281,16 +197,18 @@ export function Results({ data, targetAmount, retirementAge, input }: ResultsPro
       <div className="bg-white p-6 rounded-lg shadow-md">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-gray-700">年次収支データ</h2>
-          <button
-            onClick={handleDownloadCSV}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-sm"
-          >
-            <Download size={16} /> CSVダウンロード
-          </button>
+          {!isPrinting && (
+            <button
+              onClick={onDownloadCSV}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-sm"
+            >
+              <Download size={16} /> CSVダウンロード
+            </button>
+          )}
         </div>
-        <div className="overflow-x-auto max-h-[500px]" ref={tableContainerRef}>
+        <div className={isPrinting ? '' : "overflow-x-auto max-h-[500px]"}>
           <table className="min-w-full text-sm text-left text-gray-500">
-            <thead className="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0 z-10">
+            <thead className={`text-xs text-gray-700 uppercase bg-gray-50 ${isPrinting ? '' : 'sticky top-0 z-10'}`}>
               <tr>
                 <th className="px-4 py-3">年齢</th>
                 <th className="px-4 py-3">
@@ -365,6 +283,181 @@ export function Results({ data, targetAmount, retirementAge, input }: ResultsPro
         </div>
       </div>
     </div>
+  );
+}
+
+export function Results({ data, targetAmount, retirementAge, input }: ResultsProps) {
+  const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
+  const printRef = useRef<HTMLDivElement>(null);
+
+  const metrics = useMemo(() => {
+    // Target Reached Age (Using Nominal Balance)
+    const reachedRow = data.find(row => row.yearEndBalance >= targetAmount);
+    const targetAgeText = reachedRow ? `${reachedRow.age}歳` : "到達せず";
+
+    // Asset at Retirement (Nominal)
+    const retirementRow = data.find(row => row.age === retirementAge);
+    const retirementAssetText = retirementRow
+      ? `${retirementRow.yearEndBalance.toLocaleString()} 万円`
+      : "データなし";
+
+    // Income at Retirement (Nominal)
+    const retirementIncomeText = retirementRow
+      ? `${retirementRow.investmentIncome.toLocaleString()} 万円`
+      : "データなし";
+
+    return { targetAgeText, retirementAssetText, retirementIncomeText };
+  }, [data, targetAmount, retirementAge]);
+
+  // Prepare chart data with target line
+  const chartData = useMemo(() => {
+    return data.map(d => ({
+      ...d,
+      target: targetAmount
+    }));
+  }, [data, targetAmount]);
+
+  const summaryText = useMemo(() => {
+    return generateSimulationSummary(input, data, targetAmount);
+  }, [input, data, targetAmount]);
+
+  const handleSaveImage = () => {
+    setIsCapturing(true);
+
+    // Wait for the hidden view to render and charts to adjust
+    setTimeout(() => {
+      if (printRef.current === null) {
+        setIsCapturing(false);
+        return;
+      }
+
+      toPng(printRef.current, {
+        cacheBust: true,
+        width: 1280, // Force desktop width
+      })
+        .then((dataUrl) => {
+          const link = document.createElement('a');
+          link.download = 'simulation-results.png';
+          link.href = dataUrl;
+          link.click();
+        })
+        .catch((err) => {
+          console.error('Failed to capture image', err);
+        })
+        .finally(() => {
+          setIsCapturing(false);
+        });
+    }, 1000); // 1 second delay to ensure Recharts rendering
+  };
+
+  const handleDownloadCSV = () => {
+    // Define headers
+    const headers = [
+      '年齢',
+      'イベント',
+      '年間収入',
+      '給与収入',
+      '退職金',
+      '再雇用・年金',
+      '一時収入',
+      '年間支出',
+      '基本生活費',
+      '住居費',
+      '教育・養育費',
+      '一時支出',
+      '年間収支(貯蓄)',
+      '運用益',
+      '年末資産残高(名目)',
+      '年末資産残高(実質)'
+    ];
+
+    // Map data to rows
+    const rows = data.map(row => [
+      row.age,
+      `"${row.event || ''}"`, // Quote events to handle commas
+      row.annualIncome,
+      row.incomeBreakdown.salary,
+      row.incomeBreakdown.bonus,
+      row.incomeBreakdown.pension,
+      row.incomeBreakdown.oneTime,
+      row.annualExpenses,
+      row.expenseBreakdown.living,
+      row.expenseBreakdown.housing,
+      row.expenseBreakdown.education,
+      row.expenseBreakdown.oneTime,
+      row.annualSavings,
+      row.investmentIncome,
+      row.yearEndBalance,
+      row.yearEndBalanceReal
+    ]);
+
+    // Combine headers and rows
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+
+    // Create blob and download link (with BOM for Excel)
+    const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'life_plan_simulation.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  return (
+    <>
+      <SummaryModal
+        isOpen={isSummaryModalOpen}
+        onClose={() => setIsSummaryModalOpen(false)}
+        summaryText={summaryText}
+      />
+
+      {/* Visible Component (Interactive, Responsive) */}
+      <ResultsBody
+        data={data}
+        metrics={metrics}
+        chartData={chartData}
+        targetAmount={targetAmount}
+        retirementAge={retirementAge}
+        isPrinting={false}
+        onOpenSummary={() => setIsSummaryModalOpen(true)}
+        onSaveImage={handleSaveImage}
+        onDownloadCSV={handleDownloadCSV}
+      />
+
+      {/* Hidden Component for Capture (Fixed Desktop Width) */}
+      {isCapturing && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: -2000,
+            width: 1280,
+            zIndex: -50,
+            opacity: 1 // Must be visible for html-to-image
+          }}
+        >
+          <div ref={printRef}>
+            <ResultsBody
+              data={data}
+              metrics={metrics}
+              chartData={chartData}
+              targetAmount={targetAmount}
+              retirementAge={retirementAge}
+              isPrinting={true}
+              onOpenSummary={() => {}} // No-op
+              onSaveImage={() => {}} // No-op
+              onDownloadCSV={() => {}} // No-op
+            />
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
