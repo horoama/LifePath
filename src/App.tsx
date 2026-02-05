@@ -98,7 +98,7 @@ function App() {
       </div>
 
       {/* Sidebar (Input) */}
-      <div className={`w-full lg:w-auto ${activeTab === 'input' ? 'block' : 'hidden lg:block'}`}>
+      <div className={`w-full lg:w-96 lg:flex-none ${activeTab === 'input' ? 'block' : 'hidden lg:block'}`}>
          <Sidebar
             input={input}
             setInput={setInput}
