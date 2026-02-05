@@ -1,4 +1,5 @@
 import { X } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import type { ReactNode } from 'react';
 
 type ConfirmationModalProps = {
@@ -24,7 +25,7 @@ export function ConfirmationModal({
 }: ConfirmationModalProps) {
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm transition-opacity">
       <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden animate-fade-in-up flex flex-col">
         {/* Header */}
@@ -58,6 +59,7 @@ export function ConfirmationModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

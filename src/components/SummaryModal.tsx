@@ -1,4 +1,5 @@
 import { Copy, X, Check } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import { useState } from 'react';
 
 type SummaryModalProps = {
@@ -22,7 +23,7 @@ export function SummaryModal({ isOpen, onClose, summaryText }: SummaryModalProps
     }
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm transition-opacity">
       <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh]">
         {/* Header */}
@@ -65,6 +66,7 @@ export function SummaryModal({ isOpen, onClose, summaryText }: SummaryModalProps
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
