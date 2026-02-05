@@ -71,10 +71,10 @@ export function ExpenseSection({ input, setInput }: Props) {
         {input.livingCostPlans.map((plan, i) => {
           const isLast = i === input.livingCostPlans.length - 1;
 
-          // Determine min age for this plan
-          const minAge = i === 0
-            ? input.currentAge + 1
-            : (input.livingCostPlans[i - 1].endAge as number) + 1;
+          // Determine start age for this plan
+          const startAge = i === 0
+            ? input.currentAge
+            : (input.livingCostPlans[i - 1].endAge as number);
 
           return (
             <div key={i} className="bg-gray-50 p-3 rounded border border-gray-200 relative">
@@ -99,17 +99,13 @@ export function ExpenseSection({ input, setInput }: Props) {
                    <span className="text-sm text-brand font-bold">永続 (以降ずっと)</span>
                 </div>
               ) : (
-                <>
-                    <NumberInput
-                        label="終了年齢 (歳まで)"
-                        value={plan.endAge as number}
-                        onChange={v => updateLivingCostPlan(i, 'endAge', Math.max(minAge, v))}
-                        tooltipContent={TOOLTIPS.housingDuration}
-                    />
-                    <p className="text-xs text-gray-400 text-right mt-1">
-                        ※ {minAge}歳 〜 {plan.endAge}歳
-                    </p>
-                </>
+                <NumberInput
+                    label="期間 (年)"
+                    value={(plan.endAge as number) - startAge}
+                    onChange={v => updateLivingCostPlan(i, 'endAge', startAge + Math.max(1, v))}
+                    tooltipContent={TOOLTIPS.housingDuration}
+                    suffix={`(〜${plan.endAge}歳)`}
+                />
               )}
             </div>
           );

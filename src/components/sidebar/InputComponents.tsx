@@ -2,7 +2,7 @@ import { useState, useId, useRef, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { Tooltip } from '../Tooltip';
 
-export function NumberInput({ label, value, onChange, step = 1, className = "", tooltipContent }: { label: string, value: number, onChange: (v: number) => void, step?: number, className?: string, tooltipContent?: React.ReactNode }) {
+export function NumberInput({ label, value, onChange, step = 1, className = "", tooltipContent, suffix }: { label: string, value: number, onChange: (v: number) => void, step?: number, className?: string, tooltipContent?: React.ReactNode, suffix?: React.ReactNode }) {
   const id = useId();
   const [inputValue, setInputValue] = useState(value.toString());
   const [isFocused, setIsFocused] = useState(false);
@@ -65,16 +65,19 @@ export function NumberInput({ label, value, onChange, step = 1, className = "", 
         {label}
         {tooltipContent && <Tooltip content={tooltipContent} />}
       </label>
-      <input
-        id={id}
-        type="number"
-        value={inputValue}
-        step={step}
-        onFocus={() => setIsFocused(true)}
-        onBlur={handleBlur}
-        onChange={handleChange}
-        className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-brand focus:outline-none text-sm transition-colors"
-      />
+      <div className="flex items-center gap-2">
+        <input
+          id={id}
+          type="number"
+          value={inputValue}
+          step={step}
+          onFocus={() => setIsFocused(true)}
+          onBlur={handleBlur}
+          onChange={handleChange}
+          className="flex-1 min-w-0 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-brand focus:outline-none text-sm transition-colors"
+        />
+        {suffix && <span className="shrink-0 text-sm text-gray-600">{suffix}</span>}
+      </div>
     </div>
   );
 }

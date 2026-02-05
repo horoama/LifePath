@@ -55,9 +55,9 @@ export function HousingSection({ input, setInput }: Props) {
         {input.housingPlans.map((plan, i) => {
           const isLast = i === input.housingPlans.length - 1;
 
-          const minAge = i === 0
-            ? input.currentAge + 1
-            : (input.housingPlans[i - 1].endAge as number) + 1;
+          const startAge = i === 0
+            ? input.currentAge
+            : (input.housingPlans[i - 1].endAge as number);
 
           return (
             <div key={i} className="bg-gray-50 p-3 rounded border border-gray-200 relative">
@@ -76,17 +76,13 @@ export function HousingSection({ input, setInput }: Props) {
                    <span className="text-sm text-brand font-bold">永住 (以降ずっと)</span>
                 </div>
               ) : (
-                <>
-                    <NumberInput
-                        label="終了年齢 (歳まで)"
-                        value={plan.endAge as number}
-                        onChange={v => updateHousingPlan(i, 'endAge', Math.max(minAge, v))}
-                        tooltipContent={TOOLTIPS.housingDuration}
-                    />
-                    <p className="text-xs text-gray-400 text-right mt-1">
-                        ※ {minAge}歳 〜 {plan.endAge}歳
-                    </p>
-                </>
+                <NumberInput
+                    label="期間 (年)"
+                    value={(plan.endAge as number) - startAge}
+                    onChange={v => updateHousingPlan(i, 'endAge', startAge + Math.max(1, v))}
+                    tooltipContent={TOOLTIPS.housingDuration}
+                    suffix={`(〜${plan.endAge}歳)`}
+                />
               )}
             </div>
           );
