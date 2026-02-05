@@ -52,9 +52,7 @@ export function ExpenseSection({ input, setInput }: Props) {
 
         // Cannot be earlier than previous plan or current age
         if (value <= prevPlanEndAge) {
-            return prev; // Or clamp/handle gracefully? For now, strict reject or clamp?
-            // Let's rely on user not inputting invalid data, or clamp it?
-            // value = prevPlanEndAge + 1;
+            return prev;
         }
       }
 
@@ -89,6 +87,7 @@ export function ExpenseSection({ input, setInput }: Props) {
               <NumberInput
                 label="基本生活費 (住居・教育除く月額・万円)"
                 value={plan.cost}
+                min={0}
                 onChange={v => updateLivingCostPlan(i, 'cost', v)}
                 className="mb-2"
                 tooltipContent={TOOLTIPS.monthlyLivingCost}
@@ -102,6 +101,7 @@ export function ExpenseSection({ input, setInput }: Props) {
                 <NumberInput
                     label="期間 (年)"
                     value={(plan.endAge as number) - startAge}
+                    min={1}
                     onChange={v => updateLivingCostPlan(i, 'endAge', startAge + Math.max(1, v))}
                     tooltipContent={TOOLTIPS.housingDuration}
                     suffix={`(〜${plan.endAge}歳)`}

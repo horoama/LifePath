@@ -2,7 +2,29 @@ import { useState, useId, useRef, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { Tooltip } from '../Tooltip';
 
-export function NumberInput({ label, value, onChange, step = 1, className = "", tooltipContent, suffix }: { label: string, value: number, onChange: (v: number) => void, step?: number, className?: string, tooltipContent?: React.ReactNode, suffix?: React.ReactNode }) {
+type NumberInputProps = {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  step?: number;
+  className?: string;
+  tooltipContent?: React.ReactNode;
+  suffix?: React.ReactNode;
+  min?: number;
+  max?: number;
+};
+
+export function NumberInput({
+  label,
+  value,
+  onChange,
+  step = 1,
+  className = "",
+  tooltipContent,
+  suffix,
+  min,
+  max
+}: NumberInputProps) {
   const id = useId();
   const [inputValue, setInputValue] = useState(value.toString());
   const [isFocused, setIsFocused] = useState(false);
@@ -20,6 +42,13 @@ export function NumberInput({ label, value, onChange, step = 1, className = "", 
     setInputValue(value.toString());
   }
 
+  const clamp = (val: number) => {
+    let v = val;
+    if (min !== undefined && v < min) v = min;
+    if (max !== undefined && v > max) v = max;
+    return v;
+  };
+
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     setIsFocused(false);
 
@@ -30,12 +59,16 @@ export function NumberInput({ label, value, onChange, step = 1, className = "", 
     }
 
     const currentVal = e.target.value;
-    if (currentVal === '' || isNaN(parseFloat(currentVal))) {
-      onChange(0);
-      setInputValue('0');
-    } else {
-      onChange(parseFloat(currentVal));
+    let num = parseFloat(currentVal);
+
+    if (currentVal === '' || isNaN(num)) {
+      // Default to min if defined, otherwise 0
+      num = min !== undefined ? min : 0;
     }
+
+    num = clamp(num);
+    onChange(num);
+    setInputValue(num.toString());
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -48,10 +81,17 @@ export function NumberInput({ label, value, onChange, step = 1, className = "", 
 
     debounceTimer.current = setTimeout(() => {
         if (val === '') {
-            onChange(0);
+             // If empty, maybe don't trigger change yet or default to min?
+             // Usually better to wait for blur for empty, or treat as 0/min.
+             // Existing logic treated empty as 0.
+             const defaultVal = min !== undefined ? min : 0;
+             onChange(defaultVal);
         } else {
-            const num = parseFloat(val);
+            let num = parseFloat(val);
             if (!isNaN(num)) {
+                // We don't force update inputValue here to allow typing,
+                // but we send clamped value to parent simulation
+                num = clamp(num);
                 onChange(num);
             }
         }
@@ -71,6 +111,8 @@ export function NumberInput({ label, value, onChange, step = 1, className = "", 
           type="number"
           value={inputValue}
           step={step}
+          min={min}
+          max={max}
           onFocus={() => setIsFocused(true)}
           onBlur={handleBlur}
           onChange={handleChange}

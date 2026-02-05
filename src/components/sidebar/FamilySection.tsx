@@ -45,8 +45,8 @@ export function FamilySection({ input, setInput }: Props) {
                 <Trash2 size={16} />
               </button>
             </div>
-            <NumberInput label="誕生時期 (何年後)" value={child.birthYearOffset} onChange={v => updateChild(i, 'birthYearOffset', v)} className="mb-2" tooltipContent={TOOLTIPS.childBirth} />
-            <NumberInput label="養育費 (22歳まで月額・万円)" value={child.monthlyChildcareCost} onChange={v => updateChild(i, 'monthlyChildcareCost', v)} className="mb-2" tooltipContent={TOOLTIPS.childCareCost} />
+            <NumberInput label="誕生時期 (何年後)" value={child.birthYearOffset} min={-100} onChange={v => updateChild(i, 'birthYearOffset', v)} className="mb-2" tooltipContent={TOOLTIPS.childBirth} />
+            <NumberInput label="養育費 (22歳まで月額・万円)" value={child.monthlyChildcareCost} min={0} onChange={v => updateChild(i, 'monthlyChildcareCost', v)} className="mb-2" tooltipContent={TOOLTIPS.childCareCost} />
             <div>
               <label className="block text-xs text-gray-600 mb-1 flex items-center">
                 進学コース
