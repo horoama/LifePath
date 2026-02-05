@@ -28,7 +28,7 @@ export function Tooltip({ content }: TooltipProps) {
 
       // Default: 5px below the icon
       // Since we use position: fixed, we use viewport coordinates (rect), not adding scroll
-      let top = iconRect.bottom + 5;
+      const top = iconRect.bottom + 5;
       let left = iconRect.left;
 
       // Adjust based on tooltip size (assumed or measured)
