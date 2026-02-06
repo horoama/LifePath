@@ -9,6 +9,10 @@ import { SummaryModal } from './SummaryModal';
 import { generateSimulationSummary } from '../logic/summaryGenerator';
 import type { SimulationYearResult, SimulationInput } from '../logic/simulation';
 
+const formatCurrency = (value: number) => {
+  return value.toLocaleString(undefined, { maximumFractionDigits: 1 });
+};
+
 type ResultsProps = {
   data: SimulationYearResult[];
   targetAmount: number;
@@ -106,7 +110,7 @@ function ResultsBody({
                 <XAxis dataKey="age" label={{ value: '年齢', position: 'insideBottomRight', offset: -5 }} unit="歳" />
                 <YAxis label={{ value: '万円', angle: -90, position: 'insideLeft' }} />
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                <Tooltip formatter={(value: any) => typeof value === 'number' ? `${value.toLocaleString()} 万円` : value} />
+                <Tooltip formatter={(value: any) => typeof value === 'number' ? `${formatCurrency(value)} 万円` : value} />
                 <Legend />
                 <Area
                     type="monotone"
@@ -155,7 +159,7 @@ function ResultsBody({
                   <XAxis dataKey="age" label={{ value: '年齢', position: 'insideBottomRight', offset: -5 }} unit="歳" />
                   <YAxis label={{ value: '万円', angle: -90, position: 'insideLeft' }} />
                   {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                  <Tooltip formatter={(value: any) => typeof value === 'number' ? `${value.toLocaleString()} 万円` : value} />
+                  <Tooltip formatter={(value: any) => typeof value === 'number' ? `${formatCurrency(value)} 万円` : value} />
                   <Legend />
                   <Bar dataKey="incomeBreakdown.salary" name="給与収入" stackId="a" fill="#3b82f6" isAnimationActive={!isPrinting} />
                   <Bar dataKey="incomeBreakdown.bonus" name="退職金" stackId="a" fill="#0ea5e9" isAnimationActive={!isPrinting} />
@@ -180,7 +184,7 @@ function ResultsBody({
                   <XAxis dataKey="age" label={{ value: '年齢', position: 'insideBottomRight', offset: -5 }} unit="歳" />
                   <YAxis label={{ value: '万円', angle: -90, position: 'insideLeft' }} />
                   {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                  <Tooltip formatter={(value: any) => typeof value === 'number' ? `${value.toLocaleString()} 万円` : value} />
+                  <Tooltip formatter={(value: any) => typeof value === 'number' ? `${formatCurrency(value)} 万円` : value} />
                   <Legend />
                   <Bar dataKey="expenseBreakdown.living" name="基本生活費" stackId="a" fill="#f97316" isAnimationActive={!isPrinting} />
                   <Bar dataKey="expenseBreakdown.housing" name="住居費" stackId="a" fill="#ef4444" isAnimationActive={!isPrinting} />
@@ -257,25 +261,25 @@ function ResultsBody({
                     <div title={row.event}>{row.event || '-'}</div>
                   </td>
 
-                  <td className="px-4 py-3 text-right" title={`給与収入: ${row.incomeBreakdown.salary.toLocaleString()}
-退職金: ${row.incomeBreakdown.bonus.toLocaleString()}
-再雇用・年金: ${row.incomeBreakdown.pension.toLocaleString()}
-一時収入: ${row.incomeBreakdown.oneTime.toLocaleString()}`}>
-                    {row.annualIncome.toLocaleString()}
+                  <td className="px-4 py-3 text-right" title={`給与収入: ${formatCurrency(row.incomeBreakdown.salary)}
+退職金: ${formatCurrency(row.incomeBreakdown.bonus)}
+再雇用・年金: ${formatCurrency(row.incomeBreakdown.pension)}
+一時収入: ${formatCurrency(row.incomeBreakdown.oneTime)}`}>
+                    {formatCurrency(row.annualIncome)}
                   </td>
 
-                  <td className="px-4 py-3 text-right" title={`基本生活費: ${row.expenseBreakdown.living.toLocaleString()}
-住居費: ${row.expenseBreakdown.housing.toLocaleString()}
-教育・養育費: ${row.expenseBreakdown.education.toLocaleString()}
-一時支出: ${row.expenseBreakdown.oneTime.toLocaleString()}`}>
-                    {row.annualExpenses.toLocaleString()}
+                  <td className="px-4 py-3 text-right" title={`基本生活費: ${formatCurrency(row.expenseBreakdown.living)}
+住居費: ${formatCurrency(row.expenseBreakdown.housing)}
+教育・養育費: ${formatCurrency(row.expenseBreakdown.education)}
+一時支出: ${formatCurrency(row.expenseBreakdown.oneTime)}`}>
+                    {formatCurrency(row.annualExpenses)}
                   </td>
 
                   <td className={`px-4 py-3 text-right ${row.annualSavings >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                    {row.annualSavings.toLocaleString()}
+                    {formatCurrency(row.annualSavings)}
                   </td>
-                  <td className="px-4 py-3 text-right text-green-600" title="運用益">+{row.investmentIncome.toLocaleString()}</td>
-                  <td className="px-4 py-3 text-right font-bold text-gray-900">{row.yearEndBalance.toLocaleString()}</td>
+                  <td className="px-4 py-3 text-right text-green-600" title="運用益">+{formatCurrency(row.investmentIncome)}</td>
+                  <td className="px-4 py-3 text-right font-bold text-gray-900">{formatCurrency(row.yearEndBalance)}</td>
                 </tr>
               ))}
             </tbody>
@@ -299,12 +303,12 @@ export function Results({ data, targetAmount, retirementAge, input }: ResultsPro
     // Asset at Retirement (Nominal)
     const retirementRow = data.find(row => row.age === retirementAge);
     const retirementAssetText = retirementRow
-      ? `${retirementRow.yearEndBalance.toLocaleString()} 万円`
+      ? `${formatCurrency(retirementRow.yearEndBalance)} 万円`
       : "データなし";
 
     // Income at Retirement (Nominal)
     const retirementIncomeText = retirementRow
-      ? `${retirementRow.investmentIncome.toLocaleString()} 万円`
+      ? `${formatCurrency(retirementRow.investmentIncome)} 万円`
       : "データなし";
 
     return { targetAgeText, retirementAssetText, retirementIncomeText };
