@@ -115,7 +115,7 @@ describe('generateSimulationSummary', () => {
     expect(summary).toContain('資産運用益: 450万円');
 
     // Check Working Phase
-    expect(summary).toContain('■ 現役期間 (〜64歳)');
+    expect(summary).toContain('■ 前半期間 (〜64歳)');
     // Working rows: age 30, 40, 50
     // Income: 460 + 500 + 550 = 1510
     // Inv Income: 0 + 50 + 100 = 150
@@ -123,7 +123,7 @@ describe('generateSimulationSummary', () => {
     expect(summary).toContain('収入合計: 1,660万円');
 
     // Check Retired Phase
-    expect(summary).toContain('■ 老後期間 (65歳〜)');
+    expect(summary).toContain('■ 後半期間 (65歳〜)');
     // Retired rows: 65, 80, 90
     // Income: 1500 + 200 + 200 = 1900
     // Inv Income: 200 + 100 + 0 = 300
@@ -155,5 +155,32 @@ describe('generateSimulationSummary', () => {
      expect(summary).toContain('住居費:');
      expect(summary).toContain('月10万円 (40歳まで)');
      expect(summary).toContain('月5万円 (永続)');
+  });
+
+  it('should list all jobs chronologically and avoid "retirement age" wording', () => {
+    const jobInput: SimulationInput = {
+      ...baseInput,
+      retirementAge: 60,
+      postRetirementJobs: [
+        { startAge: 60, endAge: 65, monthlyIncome: 20, retirementBonus: 50 },
+        { startAge: 65, endAge: 'infinite', monthlyIncome: 10, retirementBonus: 0 }
+      ]
+    };
+    const summary = generateSimulationSummary(jobInput, mockData, 3000);
+
+    expect(summary).toContain('■ 収入・働き方');
+    expect(summary).not.toContain('定年退職'); // Should not use "Teinen"
+
+    // Main Job
+    expect(summary).toContain('メインの仕事 (30歳〜60歳):');
+    expect(summary).toContain('月収30万円');
+
+    // Post Retirement Jobs
+    expect(summary).toContain('その他の仕事1 (60歳〜65歳):');
+    expect(summary).toContain('月収20万円');
+    expect(summary).toContain('退職一時金: 50万円');
+
+    expect(summary).toContain('その他の仕事2 (65歳〜永続):');
+    expect(summary).toContain('月収10万円');
   });
 });
