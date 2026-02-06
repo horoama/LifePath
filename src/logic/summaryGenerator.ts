@@ -14,15 +14,26 @@ export function generateSimulationSummary(
   lines.push(`現在の資産: ${input.currentAssets.toLocaleString()}万円`);
 
   lines.push('');
-  lines.push('■ 収入・資産運用');
-  lines.push(`メインの就労収入: 月収${input.monthlyIncome.toLocaleString()}万円 / ボーナス年${input.annualBonus.toLocaleString()}万円`);
+  lines.push('■ 収入・働き方');
+
+  lines.push(`メインの仕事 (${input.currentAge}歳〜${input.retirementAge}歳):`);
+  lines.push(`  - 月収${input.monthlyIncome.toLocaleString()}万円 / ボーナス年${input.annualBonus.toLocaleString()}万円`);
   if (input.incomeIncreaseRatePct > 0) {
-    lines.push(`収入上昇率: 年${input.incomeIncreaseRatePct}%`);
+    lines.push(`  - 収入上昇率: 年${input.incomeIncreaseRatePct}%`);
   }
-  lines.push(`定年退職: ${input.retirementAge}歳 (退職金 ${input.retirementBonus.toLocaleString()}万円)`);
-  if (input.postRetirementJobs.length > 0) {
-    lines.push('退職後の働き方: あり');
+  if (input.retirementBonus > 0) {
+    lines.push(`  - 退職金: ${input.retirementBonus.toLocaleString()}万円`);
   }
+
+  input.postRetirementJobs.forEach((job, idx) => {
+    const endStr = job.endAge === 'infinite' ? '永続' : `${job.endAge}歳`;
+    lines.push(`その他の仕事${idx + 1} (${job.startAge}歳〜${endStr}):`);
+    lines.push(`  - 月収${job.monthlyIncome.toLocaleString()}万円`);
+    if (job.retirementBonus > 0) {
+      lines.push(`  - 退職一時金: ${job.retirementBonus.toLocaleString()}万円`);
+    }
+  });
+
   lines.push(`想定利回り: 年${input.interestRatePct}%`);
 
   lines.push('');
@@ -199,7 +210,7 @@ export function generateSimulationSummary(
   lines.push('--------------------');
 
   // Output: Working Phase
-  lines.push(`■ 現役期間 (〜${input.retirementAge - 1}歳)`);
+  lines.push(`■ 前半期間 (〜${input.retirementAge - 1}歳)`);
   lines.push(`収入合計: ${fmt(working.income.total)}`);
   lines.push(`支出合計: ${fmt(working.expense.total)}`);
   const workNet = working.income.total.nominal - working.expense.total.nominal;
@@ -209,7 +220,7 @@ export function generateSimulationSummary(
   lines.push('');
 
   // Output: Retired Phase
-  lines.push(`■ 老後期間 (${input.retirementAge}歳〜)`);
+  lines.push(`■ 後半期間 (${input.retirementAge}歳〜)`);
   lines.push(`収入合計: ${fmt(retired.income.total)}`);
   lines.push(`支出合計: ${fmt(retired.expense.total)}`);
   const retNet = retired.income.total.nominal - retired.expense.total.nominal;
