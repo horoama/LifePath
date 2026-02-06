@@ -50,8 +50,9 @@ describe('calculateSimulation with Inflation and Growth (Nominal Output)', () =>
 
     // Year 5
     // Nominal Living = 10 * 12 * 1.02^5
-    // 10 * 12 * 1.10408 = 132.49
-    expect(result[5].expenseBreakdown.living).toBeCloseTo(120 * Math.pow(1.02, 5), 4);
+    // 10 * 12 * 1.10408 = 132.49 -> Rounded to 132.5
+    const expected = Math.round(120 * Math.pow(1.02, 5) * 10) / 10;
+    expect(result[5].expenseBreakdown.living).toBe(expected);
     expect(result[5].expenseBreakdown.living).toBeGreaterThan(120);
   });
 
@@ -64,7 +65,9 @@ describe('calculateSimulation with Inflation and Growth (Nominal Output)', () =>
     // Real Assets should be Nominal / 1.02^5
     const nominal = result[5].yearEndBalance;
     const real = result[5].yearEndBalanceReal;
-    const expectedReal = Math.floor(nominal / Math.pow(1.02, 5));
+
+    // Now using rounding instead of floor
+    const expectedReal = Math.round((nominal / Math.pow(1.02, 5)) * 10) / 10;
 
     expect(real).toBe(expectedReal);
     expect(real).toBeLessThan(nominal);
@@ -80,7 +83,8 @@ describe('calculateSimulation with Inflation and Growth (Nominal Output)', () =>
 
     // Year 5
     // Nominal Income = 360 * 1.03^5
-    expect(result[5].annualIncome).toBeCloseTo(360 * Math.pow(1.03, 5), 4);
+    const expected = Math.round(360 * Math.pow(1.03, 5) * 10) / 10;
+    expect(result[5].annualIncome).toBe(expected);
   });
 
   it('should NOT apply income growth to retirement bonus (Nominal)', () => {

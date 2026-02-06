@@ -106,6 +106,10 @@ export const EDU_COSTS_MAP = {
   }
 };
 
+function roundVal(val: number): number {
+  return Math.round(val * 10) / 10;
+}
+
 export function calculateSimulation(input: SimulationInput): SimulationYearResult[] {
   const {
     currentAge,
@@ -306,26 +310,26 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
       age,
       yearsPassed,
       event: eventNotes.join(', '),
-      monthlyHousingCost: currentHousingCostNominal, // Nominal (Face Value)
-      annualIncome: annualIncomeNominal, // Nominal
-      annualExpenses: annualExpensesNominal, // Nominal
-      annualSavings: netSavingsNominal, // Nominal
-      yearEndBalance: Math.floor(assets), // Nominal
-      yearEndBalanceReal: Math.floor(assets / inflationFactor), // Real (Reference)
-      investmentIncome: Math.floor(investmentIncomeNominal), // Nominal
-      totalPrincipal: Math.floor(totalPrincipal), // Nominal
-      totalInvestmentIncome: Math.floor(totalInvestmentIncome), // Nominal
+      monthlyHousingCost: roundVal(currentHousingCostNominal), // Nominal (Face Value)
+      annualIncome: roundVal(annualIncomeNominal), // Nominal
+      annualExpenses: roundVal(annualExpensesNominal), // Nominal
+      annualSavings: roundVal(netSavingsNominal), // Nominal
+      yearEndBalance: roundVal(assets), // Nominal
+      yearEndBalanceReal: roundVal(assets / inflationFactor), // Real (Reference)
+      investmentIncome: roundVal(investmentIncomeNominal), // Nominal
+      totalPrincipal: roundVal(totalPrincipal), // Nominal
+      totalInvestmentIncome: roundVal(totalInvestmentIncome), // Nominal
       incomeBreakdown: {
-        salary: mainJobIncome, // Nominal
-        bonus: mainJobBonus, // Nominal
-        pension: postRetirementIncome, // Nominal
-        oneTime: oneTimeIncome // Nominal
+        salary: roundVal(mainJobIncome), // Nominal
+        bonus: roundVal(mainJobBonus), // Nominal
+        pension: roundVal(postRetirementIncome), // Nominal
+        oneTime: roundVal(oneTimeIncome) // Nominal
       },
       expenseBreakdown: {
-        living: basicLivingExpense, // Nominal
-        housing: housingExpense, // Nominal
-        education: childExpense, // Nominal
-        oneTime: oneTimeExpense // Nominal
+        living: roundVal(basicLivingExpense), // Nominal
+        housing: roundVal(housingExpense), // Nominal
+        education: roundVal(childExpense), // Nominal
+        oneTime: roundVal(oneTimeExpense) // Nominal
       }
     });
 
