@@ -2,7 +2,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { Results } from './Results';
-import { SimulationYearResult, SimulationInput } from '../logic/simulation';
+import type { SimulationYearResult, SimulationInput } from '../logic/simulation';
 
 // Mock Recharts to avoid complex SVG rendering issues in tests
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
