@@ -132,6 +132,16 @@ function ResultsBody({
                     isAnimationActive={!isPrinting}
                 />
                 <Area
+                  type="monotone"
+                  dataKey="totalPrincipal"
+                  name="元本"
+                  stroke="#9ca3af"
+                  fill="none"
+                  strokeDasharray="3 3"
+                  strokeWidth={2}
+                  isAnimationActive={!isPrinting}
+                />
+                <Area
                     type="monotone"
                     dataKey="target"
                     name="目標額"
