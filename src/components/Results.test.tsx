@@ -71,30 +71,15 @@ describe('Results Component', () => {
     expect(screen.getByText('ライフプラン・シミュレーション結果')).not.toBeNull();
   });
 
-  it('toggles principal line visibility', () => {
+  it('renders principal line', () => {
     render(<Results data={mockData} targetAmount={2000} retirementAge={60} input={mockInput} />);
 
-    // Checkbox should be initially unchecked
-    // Use getAllByLabelText in case multiple elements are found (though unexpected)
-    const checkboxes = screen.getAllByLabelText('元本を表示');
-    const checkbox = checkboxes[0] as HTMLInputElement;
-    expect(checkbox.checked).toBe(false);
+    // "元本" area should be visible unconditionally.
+    // There are 2 instances: one for display and one for printing (hidden).
+    const principalAreas = screen.getAllByTestId('area-元本');
+    expect(principalAreas.length).toBeGreaterThan(0);
 
-    // "元本" area should not be visible initially
-    expect(screen.queryByTestId('area-元本')).toBeNull();
-
-    // Click checkbox
-    fireEvent.click(checkbox);
-
-    // Checkbox should be checked
-    expect(checkbox.checked).toBe(true);
-
-    // "元本" area should be visible
-    expect(screen.getByTestId('area-元本')).not.toBeNull();
-
-    // Click again to hide
-    fireEvent.click(checkbox);
-    expect(checkbox.checked).toBe(false);
-    expect(screen.queryByTestId('area-元本')).toBeNull();
+    // Toggle switch should not exist
+    expect(screen.queryByLabelText('元本を表示')).toBeNull();
   });
 });

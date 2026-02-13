@@ -36,8 +36,6 @@ type ResultsBodyProps = {
   targetAmount: number;
   retirementAge: number;
   isPrinting: boolean;
-  showPrincipal: boolean;
-  onTogglePrincipal: (checked: boolean) => void;
   onOpenSummary: () => void;
   onSaveImage: () => void;
   onDownloadCSV: () => void;
@@ -50,8 +48,6 @@ function ResultsBody({
   targetAmount,
   retirementAge,
   isPrinting,
-  showPrincipal,
-  onTogglePrincipal,
   onOpenSummary,
   onSaveImage,
   onDownloadCSV
@@ -103,21 +99,10 @@ function ResultsBody({
       <div className="space-y-8 mb-8">
         {/* Main Asset Chart (Total Assets vs Target) */}
         <div className="bg-white p-6 rounded-lg shadow-md">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-gray-700 flex items-center gap-2">
-              総資産推移
-              <InfoTooltip content="毎年の年末時点での総資産額の推移です。「名目」は将来の金額そのもの、「実質」はインフレによる価値目減りを考慮した参考値です。" />
-            </h2>
-            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={showPrincipal}
-                onChange={(e) => onTogglePrincipal(e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-              />
-              元本を表示
-            </label>
-          </div>
+          <h2 className="text-xl font-semibold text-gray-700 mb-4 flex items-center gap-2">
+            総資産推移
+            <InfoTooltip content="毎年の年末時点での総資産額の推移です。「名目」は将来の金額そのもの、「実質」はインフレによる価値目減りを考慮した参考値です。" />
+          </h2>
           <div className="h-[400px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
@@ -146,18 +131,16 @@ function ResultsBody({
                     strokeWidth={2}
                     isAnimationActive={!isPrinting}
                 />
-                {showPrincipal && (
-                  <Area
-                    type="monotone"
-                    dataKey="totalPrincipal"
-                    name="元本"
-                    stroke="#9ca3af"
-                    fill="none"
-                    strokeDasharray="3 3"
-                    strokeWidth={2}
-                    isAnimationActive={!isPrinting}
-                  />
-                )}
+                <Area
+                  type="monotone"
+                  dataKey="totalPrincipal"
+                  name="元本"
+                  stroke="#9ca3af"
+                  fill="none"
+                  strokeDasharray="3 3"
+                  strokeWidth={2}
+                  isAnimationActive={!isPrinting}
+                />
                 <Area
                     type="monotone"
                     dataKey="target"
@@ -320,7 +303,6 @@ function ResultsBody({
 export function Results({ data, targetAmount, retirementAge, input }: ResultsProps) {
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
-  const [showPrincipal, setShowPrincipal] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
 
   const metrics = useMemo(() => {
@@ -457,8 +439,6 @@ export function Results({ data, targetAmount, retirementAge, input }: ResultsPro
         targetAmount={targetAmount}
         retirementAge={retirementAge}
         isPrinting={false}
-        showPrincipal={showPrincipal}
-        onTogglePrincipal={setShowPrincipal}
         onOpenSummary={() => setIsSummaryModalOpen(true)}
         onSaveImage={handleSaveImage}
         onDownloadCSV={handleDownloadCSV}
@@ -484,8 +464,6 @@ export function Results({ data, targetAmount, retirementAge, input }: ResultsPro
               targetAmount={targetAmount}
               retirementAge={retirementAge}
               isPrinting={true}
-              showPrincipal={showPrincipal}
-              onTogglePrincipal={() => {}} // No-op
               onOpenSummary={() => {}} // No-op
               onSaveImage={() => {}} // No-op
               onDownloadCSV={() => {}} // No-op
