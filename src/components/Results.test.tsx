@@ -67,12 +67,17 @@ const mockData: SimulationYearResult[] = [
 
 describe('Results Component', () => {
   it('renders without crashing', () => {
-    render(<Results data={mockData} targetAmount={2000} retirementAge={60} input={mockInput} />);
-    expect(screen.getByText('ライフプラン・シミュレーション結果')).not.toBeNull();
+    render(<Results data={mockData} targetAmount={2000} retirementAge={60} input={mockInput} isDarkLife={false} />);
+    expect(screen.getAllByText('ライフプラン・シミュレーション結果').length).toBeGreaterThan(0);
+  });
+
+  it('renders dark mode title', () => {
+    render(<Results data={mockData} targetAmount={2000} retirementAge={60} input={mockInput} isDarkLife={true} />);
+    expect(screen.getAllByText('ダークライフプラン・シミュレーション結果').length).toBeGreaterThan(0);
   });
 
   it('renders principal line', () => {
-    render(<Results data={mockData} targetAmount={2000} retirementAge={60} input={mockInput} />);
+    render(<Results data={mockData} targetAmount={2000} retirementAge={60} input={mockInput} isDarkLife={false} />);
 
     // "元本" area should be visible unconditionally.
     // There are 2 instances: one for display and one for printing (hidden).

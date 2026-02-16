@@ -5,7 +5,7 @@ import { WelcomeModal } from './components/WelcomeModal';
 import { calculateSimulation } from './logic/simulation';
 import { getSharedStateFromUrl, clearShareParamFromUrl } from './utils/urlShare';
 import type { SimulationInput } from './logic/simulation';
-import { Settings, BarChart3 } from 'lucide-react';
+import { Settings, BarChart3, Skull } from 'lucide-react';
 import { ShareButton } from './components/ShareButton';
 
 const DEFAULT_INPUT: SimulationInput = {
@@ -37,6 +37,7 @@ function App() {
   });
 
   const [activeTab, setActiveTab] = useState<'input' | 'result'>('input');
+  const [isDarkLife, setIsDarkLife] = useState(false);
 
   const [input, setInput] = useState<SimulationInput>(() => {
     const sharedState = getSharedStateFromUrl();
@@ -54,22 +55,31 @@ function App() {
   }, []);
 
   const simulationData = useMemo(() => {
-    return calculateSimulation(input);
-  }, [input]);
+    return calculateSimulation(input, isDarkLife);
+  }, [input, isDarkLife]);
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100 font-sans">
+    <div className={`flex flex-col lg:flex-row min-h-screen font-sans transition-colors duration-500 ${isDarkLife ? 'bg-gray-900 text-gray-100' : 'bg-gray-100'}`}>
       <WelcomeModal />
 
       {/* Mobile Sticky Header Container */}
-      <div className="lg:hidden sticky top-0 z-40 bg-white shadow-md">
+      <div className={`lg:hidden sticky top-0 z-40 shadow-md ${isDarkLife ? 'bg-gray-800' : 'bg-white'}`}>
         {/* Mobile Branding Header */}
-        <div className="flex items-center justify-between p-4 bg-brand text-white shadow-sm">
+        <div className={`flex items-center justify-between p-4 shadow-sm transition-colors duration-500 ${isDarkLife ? 'bg-gray-900 text-red-500 border-b border-red-900' : 'bg-brand text-white'}`}>
           <div className="flex items-center gap-2">
-            <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="Logo" className="w-8 h-8 bg-white rounded-full p-1" />
+            <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="Logo" className={`w-8 h-8 rounded-full p-1 ${isDarkLife ? 'bg-red-900 grayscale' : 'bg-white'}`} />
             <h1 className="text-lg font-bold">人生見えるくん</h1>
           </div>
-          <ShareButton input={input} targetAmount={targetAmount} className="bg-white/20 hover:bg-white/30 rounded-full text-white" />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsDarkLife(!isDarkLife)}
+              className={`p-2 rounded-full transition-colors ${isDarkLife ? 'bg-red-900/50 text-red-500 hover:bg-red-900/70' : 'bg-white/20 hover:bg-white/30 text-white'}`}
+              title={isDarkLife ? "通常モードに戻る" : "ダークライフモードへ"}
+            >
+              <Skull size={20} />
+            </button>
+            <ShareButton input={input} targetAmount={targetAmount} className={isDarkLife ? "bg-gray-800 text-gray-300" : "bg-white/20 hover:bg-white/30 rounded-full text-white"} />
+          </div>
         </div>
 
         {/* Mobile Toggle Buttons */}
@@ -104,6 +114,8 @@ function App() {
             setInput={setInput}
             targetAmount={targetAmount}
             setTargetAmount={setTargetAmount}
+            isDarkLife={isDarkLife}
+            setIsDarkLife={setIsDarkLife}
          />
       </div>
 
@@ -114,6 +126,7 @@ function App() {
           targetAmount={targetAmount}
           retirementAge={input.retirementAge}
           input={input}
+          isDarkLife={isDarkLife}
         />
       </div>
     </div>

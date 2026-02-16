@@ -106,7 +106,35 @@ export const EDU_COSTS_MAP = {
   }
 };
 
-export function calculateSimulation(input: SimulationInput): SimulationYearResult[] {
+export function calculateSimulation(input: SimulationInput, isDarkLife: boolean = false): SimulationYearResult[] {
+  // Deep copy input if Dark Life mode is active to apply modifiers without affecting original state
+  // We use JSON parse/stringify for a quick deep clone as the object structure is simple (no functions/dates)
+  const simulationInput = isDarkLife ? JSON.parse(JSON.stringify(input)) as SimulationInput : input;
+
+  if (isDarkLife) {
+    // Apply Dark Life Modifiers (Despair Mode)
+    simulationInput.currentAssets *= 0.5; // Assets halved
+    simulationInput.monthlyIncome *= 0.8; // Income reduced by 20%
+    simulationInput.annualBonus *= 0.5;   // Bonus halved
+    simulationInput.retirementBonus *= 0.5; // Retirement bonus halved
+
+    // Expenses increased
+    simulationInput.livingCostPlans.forEach((p: ExpensePlan) => { p.cost *= 1.2; });
+    simulationInput.housingPlans.forEach((p: HousingPlan) => { p.cost *= 1.2; });
+    simulationInput.children.forEach((c: Child) => { c.monthlyChildcareCost *= 1.2; });
+
+    // Post-retirement jobs income reduced
+    simulationInput.postRetirementJobs.forEach((j: PostRetirementJob) => {
+      j.monthlyIncome *= 0.8;
+      j.retirementBonus *= 0.5;
+    });
+
+    // Market crash simulation
+    simulationInput.interestRatePct = -3.0; // Negative interest
+    simulationInput.inflationRatePct = (input.inflationRatePct || 0) + 3.0; // High inflation
+    simulationInput.incomeIncreaseRatePct = -1.0; // Income decreases over time
+  }
+
   const {
     currentAge,
     currentAssets,
@@ -123,7 +151,7 @@ export function calculateSimulation(input: SimulationInput): SimulationYearResul
     housingPlans,
     children,
     oneTimeEvents
-  } = input;
+  } = simulationInput;
 
   const interestRate = interestRatePct / 100.0;
   const inflationRate = inflationRatePct / 100.0;
