@@ -13,11 +13,45 @@ const formatCurrency = (value: number) => {
   return value.toLocaleString(undefined, { maximumFractionDigits: 1 });
 };
 
+const CHART_COLORS = {
+  normal: {
+    assetNominal: "#8884d8",
+    assetReal: "#82ca9d",
+    assetPrincipal: "#9ca3af",
+    target: "#ff7f0e",
+    incomeSalary: "#3b82f6",
+    incomeBonus: "#0ea5e9",
+    incomePension: "#8b5cf6",
+    incomeOneTime: "#22c55e",
+    incomeInvestment: "#f59e0b",
+    expenseLiving: "#f97316",
+    expenseHousing: "#ef4444",
+    expenseEdu: "#ec4899",
+    expenseOneTime: "#eab308",
+  },
+  dark: {
+    assetNominal: "#ef4444", // Red
+    assetReal: "#b91c1c",     // Dark Red
+    assetPrincipal: "#4b5563", // Gray
+    target: "#7f1d1d",        // Darkest Red
+    incomeSalary: "#6b7280",  // Gray
+    incomeBonus: "#4b5563",   // Dark Gray
+    incomePension: "#374151", // Darker Gray
+    incomeOneTime: "#1f2937", // Very Dark Gray
+    incomeInvestment: "#991b1b", // Red (Loss)
+    expenseLiving: "#ef4444", // Red
+    expenseHousing: "#dc2626", // Red
+    expenseEdu: "#b91c1c",    // Dark Red
+    expenseOneTime: "#7f1d1d", // Darkest Red
+  }
+};
+
 type ResultsProps = {
   data: SimulationYearResult[];
   targetAmount: number;
   retirementAge: number;
   input: SimulationInput;
+  isDarkLife: boolean;
 };
 
 type MetricData = {
@@ -39,6 +73,7 @@ type ResultsBodyProps = {
   onOpenSummary: () => void;
   onSaveImage: () => void;
   onDownloadCSV: () => void;
+  isDarkLife: boolean;
 };
 
 function ResultsBody({
@@ -50,24 +85,32 @@ function ResultsBody({
   isPrinting,
   onOpenSummary,
   onSaveImage,
-  onDownloadCSV
+  onDownloadCSV,
+  isDarkLife
 }: ResultsBodyProps) {
+  const colors = isDarkLife ? CHART_COLORS.dark : CHART_COLORS.normal;
+  const textColor = isDarkLife ? 'text-gray-100' : 'text-gray-900';
+  const subTextColor = isDarkLife ? 'text-gray-400' : 'text-gray-500';
+  const bgColor = isDarkLife ? 'bg-gray-800' : 'bg-white';
+
   return (
-    <div className={`flex-1 p-8 bg-gray-100 ${isPrinting ? '' : 'overflow-y-auto'}`}>
+    <div className={`flex-1 p-8 transition-colors duration-500 ${isDarkLife ? 'bg-gray-900' : 'bg-gray-100'} ${isPrinting ? '' : 'overflow-y-auto'}`}>
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">ライフプラン・シミュレーション結果</h1>
+        <h1 className={`text-3xl font-bold transition-colors duration-500 ${isDarkLife ? 'text-red-500' : 'text-gray-800'}`}>
+          {isDarkLife ? 'ダークライフプラン・シミュレーション結果' : 'ライフプラン・シミュレーション結果'}
+        </h1>
         {!isPrinting && (
           <div className="flex gap-2">
             <button
               onClick={onOpenSummary}
-              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded shadow transition-colors cursor-pointer"
+              className={`flex items-center gap-2 font-bold py-2 px-4 rounded shadow transition-colors cursor-pointer ${isDarkLife ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-indigo-600 hover:bg-indigo-700 text-white'}`}
             >
               <FileText size={20} />
               <span>結果をまとめる</span>
             </button>
             <button
               onClick={onSaveImage}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow transition-colors cursor-pointer"
+              className={`flex items-center gap-2 font-bold py-2 px-4 rounded shadow transition-colors cursor-pointer ${isDarkLife ? 'bg-red-900 hover:bg-red-800 text-red-100' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
             >
               <Camera size={20} />
               <span>画像で保存</span>
@@ -82,42 +125,48 @@ function ResultsBody({
           label={`目標${targetAmount}万円到達年齢`}
           value={metrics.targetAgeText}
           tooltipContent="資産額が目標金額（名目値）を初めて上回る年齢です。"
+          isDarkLife={isDarkLife}
         />
         <MetricCard
           label={`${retirementAge}歳時点の資産額`}
           value={metrics.retirementAssetText}
           tooltipContent="メインの退職年齢時点での総資産額（名目値）です。"
+          isDarkLife={isDarkLife}
         />
         <MetricCard
           label={`${retirementAge}歳時点の年間不労所得`}
           value={metrics.retirementIncomeText}
           tooltipContent="退職年齢時点で発生している不労所得（運用益など・名目値）の年間金額です。"
+          isDarkLife={isDarkLife}
         />
       </div>
 
       {/* Charts Container */}
       <div className="space-y-8 mb-8">
         {/* Main Asset Chart (Total Assets vs Target) */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold text-gray-700 mb-4 flex items-center gap-2">
+        <div className={`p-6 rounded-lg shadow-md transition-colors duration-500 ${bgColor}`}>
+          <h2 className={`text-xl font-semibold mb-4 flex items-center gap-2 ${isDarkLife ? 'text-gray-200' : 'text-gray-700'}`}>
             総資産推移
             <InfoTooltip content="毎年の年末時点での総資産額の推移です。「名目」は将来の金額そのもの、「実質」はインフレによる価値目減りを考慮した参考値です。" />
           </h2>
           <div className="h-[400px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="age" label={{ value: '年齢', position: 'insideBottomRight', offset: -5 }} unit="歳" />
-                <YAxis label={{ value: '万円', angle: -90, position: 'insideLeft' }} />
+                <CartesianGrid strokeDasharray="3 3" stroke={isDarkLife ? '#374151' : '#e5e7eb'} />
+                <XAxis dataKey="age" label={{ value: '年齢', position: 'insideBottomRight', offset: -5, fill: isDarkLife ? '#9ca3af' : '#666' }} unit="歳" stroke={isDarkLife ? '#9ca3af' : '#666'} />
+                <YAxis label={{ value: '万円', angle: -90, position: 'insideLeft', fill: isDarkLife ? '#9ca3af' : '#666' }} stroke={isDarkLife ? '#9ca3af' : '#666'} />
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                <Tooltip formatter={(value: any) => typeof value === 'number' ? `${formatCurrency(value)} 万円` : value} />
-                <Legend />
+                <Tooltip
+                   formatter={(value: any) => typeof value === 'number' ? `${formatCurrency(value)} 万円` : value}
+                   contentStyle={{ backgroundColor: isDarkLife ? '#1f2937' : '#fff', borderColor: isDarkLife ? '#374151' : '#ccc', color: isDarkLife ? '#f3f4f6' : '#333' }}
+                />
+                <Legend wrapperStyle={{ color: isDarkLife ? '#e5e7eb' : '#333' }} />
                 <Area
                     type="monotone"
                     dataKey="yearEndBalance"
                     name="総資産(名目)"
-                    stroke="#8884d8"
-                    fill="#8884d8"
+                    stroke={colors.assetNominal}
+                    fill={colors.assetNominal}
                     fillOpacity={0.6}
                     isAnimationActive={!isPrinting}
                 />
@@ -125,7 +174,7 @@ function ResultsBody({
                     type="monotone"
                     dataKey="yearEndBalanceReal"
                     name="総資産(実質)"
-                    stroke="#82ca9d"
+                    stroke={colors.assetReal}
                     fill="none"
                     strokeDasharray="5 5"
                     strokeWidth={2}
@@ -135,7 +184,7 @@ function ResultsBody({
                   type="monotone"
                   dataKey="totalPrincipal"
                   name="元本"
-                  stroke="#9ca3af"
+                  stroke={colors.assetPrincipal}
                   fill="none"
                   strokeDasharray="3 3"
                   strokeWidth={2}
@@ -145,7 +194,7 @@ function ResultsBody({
                     type="monotone"
                     dataKey="target"
                     name="目標額"
-                    stroke="#ff7f0e"
+                    stroke={colors.target}
                     fill="none"
                     strokeDasharray="5 5"
                     isAnimationActive={!isPrinting}
@@ -157,49 +206,55 @@ function ResultsBody({
 
         <div className={`grid grid-cols-1 gap-8 ${isPrinting ? 'grid-cols-2' : 'xl:grid-cols-2'}`}>
           {/* Income Breakdown Chart */}
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold text-gray-700 mb-4 flex items-center gap-2">
+          <div className={`p-6 rounded-lg shadow-md transition-colors duration-500 ${bgColor}`}>
+            <h2 className={`text-xl font-semibold mb-4 flex items-center gap-2 ${isDarkLife ? 'text-gray-200' : 'text-gray-700'}`}>
               年間収入内訳
               <InfoTooltip content="年間の収入内訳（名目値）です。「運用益」は資産運用による利益を表します。" />
             </h2>
             <div className="h-[400px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="age" label={{ value: '年齢', position: 'insideBottomRight', offset: -5 }} unit="歳" />
-                  <YAxis label={{ value: '万円', angle: -90, position: 'insideLeft' }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={isDarkLife ? '#374151' : '#e5e7eb'} />
+                  <XAxis dataKey="age" label={{ value: '年齢', position: 'insideBottomRight', offset: -5, fill: isDarkLife ? '#9ca3af' : '#666' }} unit="歳" stroke={isDarkLife ? '#9ca3af' : '#666'} />
+                  <YAxis label={{ value: '万円', angle: -90, position: 'insideLeft', fill: isDarkLife ? '#9ca3af' : '#666' }} stroke={isDarkLife ? '#9ca3af' : '#666'} />
                   {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                  <Tooltip formatter={(value: any) => typeof value === 'number' ? `${formatCurrency(value)} 万円` : value} />
+                  <Tooltip
+                    formatter={(value: any) => typeof value === 'number' ? `${formatCurrency(value)} 万円` : value}
+                    contentStyle={{ backgroundColor: isDarkLife ? '#1f2937' : '#fff', borderColor: isDarkLife ? '#374151' : '#ccc', color: isDarkLife ? '#f3f4f6' : '#333' }}
+                  />
                   <Legend />
-                  <Bar dataKey="incomeBreakdown.salary" name="給与収入" stackId="a" fill="#3b82f6" isAnimationActive={!isPrinting} />
-                  <Bar dataKey="incomeBreakdown.bonus" name="退職金" stackId="a" fill="#0ea5e9" isAnimationActive={!isPrinting} />
-                  <Bar dataKey="incomeBreakdown.pension" name="再雇用・年金" stackId="a" fill="#8b5cf6" isAnimationActive={!isPrinting} />
-                  <Bar dataKey="incomeBreakdown.oneTime" name="一時収入" stackId="a" fill="#22c55e" isAnimationActive={!isPrinting} />
-                  <Bar dataKey="investmentIncome" name="運用益" stackId="a" fill="#f59e0b" isAnimationActive={!isPrinting} />
+                  <Bar dataKey="incomeBreakdown.salary" name="給与収入" stackId="a" fill={colors.incomeSalary} isAnimationActive={!isPrinting} />
+                  <Bar dataKey="incomeBreakdown.bonus" name="退職金" stackId="a" fill={colors.incomeBonus} isAnimationActive={!isPrinting} />
+                  <Bar dataKey="incomeBreakdown.pension" name="再雇用・年金" stackId="a" fill={colors.incomePension} isAnimationActive={!isPrinting} />
+                  <Bar dataKey="incomeBreakdown.oneTime" name="一時収入" stackId="a" fill={colors.incomeOneTime} isAnimationActive={!isPrinting} />
+                  <Bar dataKey="investmentIncome" name="運用益" stackId="a" fill={colors.incomeInvestment} isAnimationActive={!isPrinting} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
 
           {/* Expense Breakdown Chart */}
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold text-gray-700 mb-4 flex items-center gap-2">
+          <div className={`p-6 rounded-lg shadow-md transition-colors duration-500 ${bgColor}`}>
+            <h2 className={`text-xl font-semibold mb-4 flex items-center gap-2 ${isDarkLife ? 'text-gray-200' : 'text-gray-700'}`}>
               年間支出内訳
               <InfoTooltip content="年間の支出内訳（名目値）です。インフレ率に応じて生活費や教育費が増加して表示されます。" />
             </h2>
             <div className="h-[400px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="age" label={{ value: '年齢', position: 'insideBottomRight', offset: -5 }} unit="歳" />
-                  <YAxis label={{ value: '万円', angle: -90, position: 'insideLeft' }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={isDarkLife ? '#374151' : '#e5e7eb'} />
+                  <XAxis dataKey="age" label={{ value: '年齢', position: 'insideBottomRight', offset: -5, fill: isDarkLife ? '#9ca3af' : '#666' }} unit="歳" stroke={isDarkLife ? '#9ca3af' : '#666'} />
+                  <YAxis label={{ value: '万円', angle: -90, position: 'insideLeft', fill: isDarkLife ? '#9ca3af' : '#666' }} stroke={isDarkLife ? '#9ca3af' : '#666'} />
                   {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                  <Tooltip formatter={(value: any) => typeof value === 'number' ? `${formatCurrency(value)} 万円` : value} />
+                  <Tooltip
+                    formatter={(value: any) => typeof value === 'number' ? `${formatCurrency(value)} 万円` : value}
+                    contentStyle={{ backgroundColor: isDarkLife ? '#1f2937' : '#fff', borderColor: isDarkLife ? '#374151' : '#ccc', color: isDarkLife ? '#f3f4f6' : '#333' }}
+                  />
                   <Legend />
-                  <Bar dataKey="expenseBreakdown.living" name="基本生活費" stackId="a" fill="#f97316" isAnimationActive={!isPrinting} />
-                  <Bar dataKey="expenseBreakdown.housing" name="住居費" stackId="a" fill="#ef4444" isAnimationActive={!isPrinting} />
-                  <Bar dataKey="expenseBreakdown.education" name="教育・養育費" stackId="a" fill="#ec4899" isAnimationActive={!isPrinting} />
-                  <Bar dataKey="expenseBreakdown.oneTime" name="一時支出" stackId="a" fill="#eab308" isAnimationActive={!isPrinting} />
+                  <Bar dataKey="expenseBreakdown.living" name="基本生活費" stackId="a" fill={colors.expenseLiving} isAnimationActive={!isPrinting} />
+                  <Bar dataKey="expenseBreakdown.housing" name="住居費" stackId="a" fill={colors.expenseHousing} isAnimationActive={!isPrinting} />
+                  <Bar dataKey="expenseBreakdown.education" name="教育・養育費" stackId="a" fill={colors.expenseEdu} isAnimationActive={!isPrinting} />
+                  <Bar dataKey="expenseBreakdown.oneTime" name="一時支出" stackId="a" fill={colors.expenseOneTime} isAnimationActive={!isPrinting} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -208,9 +263,9 @@ function ResultsBody({
       </div>
 
       {/* Table */}
-      <div className="bg-white p-6 rounded-lg shadow-md">
+      <div className={`p-6 rounded-lg shadow-md transition-colors duration-500 ${bgColor}`}>
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-700">年次収支データ</h2>
+          <h2 className={`text-xl font-semibold ${isDarkLife ? 'text-gray-200' : 'text-gray-700'}`}>年次収支データ</h2>
           {!isPrinting && (
             <button
               onClick={onDownloadCSV}
@@ -221,8 +276,8 @@ function ResultsBody({
           )}
         </div>
         <div className={isPrinting ? '' : "overflow-x-auto max-h-[500px]"}>
-          <table className="min-w-full text-sm text-left text-gray-500">
-            <thead className={`text-xs text-gray-700 uppercase bg-gray-50 ${isPrinting ? '' : 'sticky top-0 z-10'}`}>
+          <table className={`min-w-full text-sm text-left ${subTextColor}`}>
+            <thead className={`text-xs uppercase ${isDarkLife ? 'bg-gray-700 text-gray-300' : 'bg-gray-50 text-gray-700'} ${isPrinting ? '' : 'sticky top-0 z-10'}`}>
               <tr>
                 <th className="px-4 py-3">年齢</th>
                 <th className="px-4 py-3">
@@ -249,7 +304,7 @@ function ResultsBody({
                     <InfoTooltip content="年間収入 － 年間支出 です。プラスなら資産増、マイナスなら資産取り崩しとなります。" />
                   </div>
                 </th>
-                <th className="px-4 py-3 text-right text-green-600">
+                <th className={`px-4 py-3 text-right ${isDarkLife ? 'text-red-400' : 'text-green-600'}`}>
                   <div className="flex items-center justify-end gap-1">
                     運用益
                     <InfoTooltip content="期首資産 × 想定年利 で計算された運用益です。全額再投資される前提です。" />
@@ -265,8 +320,8 @@ function ResultsBody({
             </thead>
             <tbody>
               {data.map((row) => (
-                <tr key={row.age} className="bg-white border-b hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium text-gray-900">{row.age}</td>
+                <tr key={row.age} className={`border-b transition-colors duration-200 ${isDarkLife ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-white border-gray-100 hover:bg-gray-50'}`}>
+                  <td className={`px-4 py-3 font-medium ${textColor}`}>{row.age}</td>
                   <td className="px-4 py-3">
                     <div title={row.event}>{row.event || '-'}</div>
                   </td>
@@ -285,11 +340,11 @@ function ResultsBody({
                     {formatCurrency(row.annualExpenses)}
                   </td>
 
-                  <td className={`px-4 py-3 text-right ${row.annualSavings >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                  <td className={`px-4 py-3 text-right ${row.annualSavings >= 0 ? (isDarkLife ? 'text-blue-400' : 'text-blue-600') : (isDarkLife ? 'text-red-500 font-bold' : 'text-red-600')}`}>
                     {formatCurrency(row.annualSavings)}
                   </td>
-                  <td className="px-4 py-3 text-right text-green-600" title="運用益">+{formatCurrency(row.investmentIncome)}</td>
-                  <td className="px-4 py-3 text-right font-bold text-gray-900">{formatCurrency(row.yearEndBalance)}</td>
+                  <td className={`px-4 py-3 text-right ${isDarkLife ? 'text-red-400' : 'text-green-600'}`} title="運用益">+{formatCurrency(row.investmentIncome)}</td>
+                  <td className={`px-4 py-3 text-right font-bold ${textColor}`}>{formatCurrency(row.yearEndBalance)}</td>
                 </tr>
               ))}
             </tbody>
@@ -300,7 +355,7 @@ function ResultsBody({
   );
 }
 
-export function Results({ data, targetAmount, retirementAge, input }: ResultsProps) {
+export function Results({ data, targetAmount, retirementAge, input, isDarkLife }: ResultsProps) {
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
@@ -442,6 +497,7 @@ export function Results({ data, targetAmount, retirementAge, input }: ResultsPro
         onOpenSummary={() => setIsSummaryModalOpen(true)}
         onSaveImage={handleSaveImage}
         onDownloadCSV={handleDownloadCSV}
+        isDarkLife={isDarkLife}
       />
 
       {/* Hidden Component for Capture (Fixed Desktop Width) */}
@@ -467,6 +523,7 @@ export function Results({ data, targetAmount, retirementAge, input }: ResultsPro
               onOpenSummary={() => {}} // No-op
               onSaveImage={() => {}} // No-op
               onDownloadCSV={() => {}} // No-op
+              isDarkLife={isDarkLife}
             />
           </div>
         </div>
@@ -475,14 +532,14 @@ export function Results({ data, targetAmount, retirementAge, input }: ResultsPro
   );
 }
 
-function MetricCard({ label, value, tooltipContent }: { label: string, value: string, tooltipContent?: React.ReactNode }) {
+function MetricCard({ label, value, tooltipContent, isDarkLife }: { label: string, value: string, tooltipContent?: React.ReactNode, isDarkLife: boolean }) {
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500">
-      <div className="text-sm text-gray-500 mb-1 flex items-center gap-1">
+    <div className={`p-6 rounded-lg shadow-md border-l-4 transition-colors duration-500 ${isDarkLife ? 'bg-gray-800 border-red-700' : 'bg-white border-blue-500'}`}>
+      <div className={`text-sm mb-1 flex items-center gap-1 ${isDarkLife ? 'text-gray-400' : 'text-gray-500'}`}>
         {label}
         {tooltipContent && <InfoTooltip content={tooltipContent} />}
       </div>
-      <div className="text-3xl font-bold text-gray-800">{value}</div>
+      <div className={`text-3xl font-bold transition-colors duration-500 ${isDarkLife ? 'text-red-500' : 'text-gray-800'}`}>{value}</div>
     </div>
   );
 }
