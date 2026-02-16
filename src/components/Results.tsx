@@ -155,8 +155,8 @@ function ResultsBody({
                 <CartesianGrid strokeDasharray="3 3" stroke={isDarkLife ? '#374151' : '#e5e7eb'} />
                 <XAxis dataKey="age" label={{ value: '年齢', position: 'insideBottomRight', offset: -5, fill: isDarkLife ? '#9ca3af' : '#666' }} unit="歳" stroke={isDarkLife ? '#9ca3af' : '#666'} />
                 <YAxis label={{ value: '万円', angle: -90, position: 'insideLeft', fill: isDarkLife ? '#9ca3af' : '#666' }} stroke={isDarkLife ? '#9ca3af' : '#666'} />
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 <Tooltip
+                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                    formatter={(value: any) => typeof value === 'number' ? `${formatCurrency(value)} 万円` : value}
                    contentStyle={{ backgroundColor: isDarkLife ? '#1f2937' : '#fff', borderColor: isDarkLife ? '#374151' : '#ccc', color: isDarkLife ? '#f3f4f6' : '#333' }}
                 />
@@ -217,8 +217,8 @@ function ResultsBody({
                   <CartesianGrid strokeDasharray="3 3" stroke={isDarkLife ? '#374151' : '#e5e7eb'} />
                   <XAxis dataKey="age" label={{ value: '年齢', position: 'insideBottomRight', offset: -5, fill: isDarkLife ? '#9ca3af' : '#666' }} unit="歳" stroke={isDarkLife ? '#9ca3af' : '#666'} />
                   <YAxis label={{ value: '万円', angle: -90, position: 'insideLeft', fill: isDarkLife ? '#9ca3af' : '#666' }} stroke={isDarkLife ? '#9ca3af' : '#666'} />
-                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                   <Tooltip
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     formatter={(value: any) => typeof value === 'number' ? `${formatCurrency(value)} 万円` : value}
                     contentStyle={{ backgroundColor: isDarkLife ? '#1f2937' : '#fff', borderColor: isDarkLife ? '#374151' : '#ccc', color: isDarkLife ? '#f3f4f6' : '#333' }}
                   />
@@ -245,8 +245,8 @@ function ResultsBody({
                   <CartesianGrid strokeDasharray="3 3" stroke={isDarkLife ? '#374151' : '#e5e7eb'} />
                   <XAxis dataKey="age" label={{ value: '年齢', position: 'insideBottomRight', offset: -5, fill: isDarkLife ? '#9ca3af' : '#666' }} unit="歳" stroke={isDarkLife ? '#9ca3af' : '#666'} />
                   <YAxis label={{ value: '万円', angle: -90, position: 'insideLeft', fill: isDarkLife ? '#9ca3af' : '#666' }} stroke={isDarkLife ? '#9ca3af' : '#666'} />
-                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                   <Tooltip
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     formatter={(value: any) => typeof value === 'number' ? `${formatCurrency(value)} 万円` : value}
                     contentStyle={{ backgroundColor: isDarkLife ? '#1f2937' : '#fff', borderColor: isDarkLife ? '#374151' : '#ccc', color: isDarkLife ? '#f3f4f6' : '#333' }}
                   />
