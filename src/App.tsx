@@ -4,6 +4,7 @@ import { Results } from './components/Results';
 import { WelcomeModal } from './components/WelcomeModal';
 import { calculateSimulation } from './logic/simulation';
 import { getSharedStateFromUrl, clearShareParamFromUrl } from './utils/urlShare';
+import { loadSettings } from './utils/storage';
 import type { SimulationInput } from './logic/simulation';
 import { Settings, BarChart3, Skull } from 'lucide-react';
 import { ShareButton } from './components/ShareButton';
@@ -33,7 +34,12 @@ const DEFAULT_INPUT: SimulationInput = {
 function App() {
   const [targetAmount, setTargetAmount] = useState<number>(() => {
     const sharedState = getSharedStateFromUrl();
-    return sharedState ? sharedState.targetAmount : 3000;
+    if (sharedState) return sharedState.targetAmount;
+
+    const storedSettings = loadSettings();
+    if (storedSettings) return storedSettings.targetAmount;
+
+    return 3000;
   });
 
   const [activeTab, setActiveTab] = useState<'input' | 'result'>('input');
@@ -44,6 +50,13 @@ function App() {
     if (sharedState) {
       return sharedState.input;
     }
+
+    const storedSettings = loadSettings();
+    if (storedSettings) {
+      // Merge with default input to ensure new fields are present if any
+      return { ...DEFAULT_INPUT, ...storedSettings.input };
+    }
+
     return DEFAULT_INPUT;
   });
 
