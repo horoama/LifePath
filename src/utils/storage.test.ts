@@ -56,6 +56,7 @@ describe('storage utils', () => {
     // Instead, we can force a failure by passing a circular object that fails JSON.stringify,
     // which happens inside the try-catch block of saveSettings.
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const circularInput: any = { ...DEFAULT_INPUT };
     circularInput.self = circularInput;
 
