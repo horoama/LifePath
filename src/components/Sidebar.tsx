@@ -7,6 +7,7 @@ import { HousingSection } from './sidebar/HousingSection';
 import { FamilySection } from './sidebar/FamilySection';
 import { LifeEventSection } from './sidebar/LifeEventSection';
 import { ShareButton } from './ShareButton';
+import { SaveSettingsButton } from './SaveSettingsButton';
 import { Skull } from 'lucide-react';
 import { useState } from 'react';
 import { TermsModal } from './TermsModal';
@@ -61,24 +62,28 @@ export function Sidebar({ input, setInput, targetAmount, setTargetAmount, isDark
         <FamilySection input={input} setInput={setInput} />
         <LifeEventSection input={input} setInput={setInput} />
 
-        <div className="pt-6 border-t border-gray-100 text-center space-y-3">
-          <div>
-            <a
-              href="https://forms.gle/NRh4gBUFodRkW8jb8"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-gray-500 hover:text-brand underline"
-            >
-              お問い合わせ・ご意見はこちら
-            </a>
-          </div>
-          <div>
-            <button
-              onClick={() => setIsTermsOpen(true)}
-              className="text-sm text-gray-500 hover:text-brand underline bg-transparent border-none cursor-pointer"
-            >
-              利用規約・免責事項
-            </button>
+        <div className="pt-6 border-t border-gray-100 space-y-6">
+          <SaveSettingsButton input={input} targetAmount={targetAmount} />
+
+          <div className="text-center space-y-3">
+            <div>
+              <a
+                href="https://forms.gle/NRh4gBUFodRkW8jb8"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-gray-500 hover:text-brand underline"
+              >
+                お問い合わせ・ご意見はこちら
+              </a>
+            </div>
+            <div>
+              <button
+                onClick={() => setIsTermsOpen(true)}
+                className="text-sm text-gray-500 hover:text-brand underline bg-transparent border-none cursor-pointer"
+              >
+                利用規約・免責事項
+              </button>
+            </div>
           </div>
         </div>
 
